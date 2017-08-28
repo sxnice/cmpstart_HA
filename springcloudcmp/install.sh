@@ -3,7 +3,6 @@
 #set -eo pipefail
 shopt -s nullglob
 source ./colorecho
-
 nodetyper=1
 nodeplanr=1
 nodenor=1
@@ -20,10 +19,6 @@ CURRENT_DIR="/springcloudcmp"
 #用户名，密码
 cmpuser="cmpimuser"
 cmppass="Pbu4@123"
-#主节点IP组，用空格格开
-SSH_GROUP1="192.168.3.97 192.168.3.139"
-#备节点IP组，用空格格开
-SSH_GROUP2="10.143.132.187 10.143.132.189"
 #MYSQLIP 单机
 MYSQL_H="10.143.132.187"
 #MYSQL相关密码
@@ -34,8 +29,6 @@ MYSQL_IM_PASSWORD="Pbu4@123"
 MONGDO_H="10.143.132.187"
 MONGDO_PASSWORD="Pbu4@123"
 #-----------------------------------------------
-declare -a SSH_G1=($SSH_GROUP1)
-declare -a SSH_G2=($SSH_GROUP2)
 
 #检测操作系统
 check_ostype(){
@@ -56,6 +49,11 @@ check_ostype(){
 #检测安装软件
 install-interpackage(){
 	echo_green "环境检测开始..."
+	#从文件里读取ip节点组，一行为一个组
+	for line in $(cat ./haiplist)
+	    do
+	declare -a SSH_HOST=($line)
+	echo "检测节点组"
 	for i in "${SSH_HOST[@]}"
             do
 		echo "安装依赖包到"$i
@@ -145,6 +143,8 @@ EOF
 		    exit
 EOF
 		echo "complete..." 
+	done
+	echo "complete...."
 	done
 	echo_green "检测安装环境完成..."
 }
