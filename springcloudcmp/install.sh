@@ -28,7 +28,12 @@ MYSQL_IM_PASSWORD="Pbu4@123"
 #MONGOIP 单机
 MONGDO_H="10.143.132.187"
 MONGDO_PASSWORD="Pbu4@123"
+#主主控节点，备主控节点 空格格开
+HA_H="10.143.132.187 10.143.132.190"
+#haiplist文件放HA节点ip组
 #-----------------------------------------------
+declare -a SSH_HOST=()
+declare -a HA_HOST=($HA_H)
 
 #检测操作系统
 check_ostype(){
@@ -52,7 +57,7 @@ install-interpackage(){
 	#从文件里读取ip节点组，一行为一个组
 	for line in $(cat ./haiplist)
 	    do
-	declare -a SSH_HOST=($line)
+	SSH_HOST=($line)
 	echo "检测节点组"
 	for i in "${SSH_HOST[@]}"
             do
@@ -151,9 +156,14 @@ EOF
 
 #建立对等互信
 ssh-interconnect(){
-    echo_green "建立对等互信开始..."
+	echo_green "建立对等互信开始..."
 	local ssh_init_path=./ssh-init.sh
-        $ssh_init_path $SSH_H
+        #从文件里读取ip节点组，一行为一个组
+        for line in $(cat ./haiplist)
+        do
+		echo "节点组"
+		$ssh_init_path $line
+	done
 	echo_green "建立对等互信完成..."
 }
 
@@ -161,12 +171,18 @@ ssh-interconnect(){
 user-internode(){
 	echo_green "建立普通用户cmpimuser开始..."
 	local ssh_pass_path=./ssh-pass.sh
-        $ssh_pass_path $SSH_H
-	for i in "${SSH_HOST[@]}"
-	do
-	ssh $i <<EOF
-	echo "$cmpuser:$cmppass" | chpasswd
+        #从文件里读取ip节点组，一行为一个组
+        for line in $(cat ./haiplist)
+        do
+        	SSH_HOST=($line)
+        	echo "检测节点组"
+		$ssh_pass_path $line
+		for i in "${SSH_HOST[@]}"
+		do
+			ssh $i <<EOF
+			echo "$cmpuser:$cmppass" | chpasswd
 EOF
+		done
 	done
 	echo_green "建立普通用户cmpimuser完成..."
         
@@ -178,43 +194,49 @@ copy-internode(){
      
      case $nodeplanr in
 	  [1-4]) #部署
-	    for i in "${SSH_HOST[@]}"
+            #从文件里读取ip节点组，一行为一个组
+            for line in $(cat ./haiplist)
+            do
+		SSH_HOST=($line)
+		echo "复制文件到节点组"
+		for i in "${SSH_HOST[@]}"
 		do
-		echo "复制文件到"$i 
-		#放根目录下
-		scp -r ./ "$i":$CURRENT_DIR
-		#赋权
-		ssh $i <<EOF
-		rm -rf /tmp/spring.log
-		rm -rf /tmp/modelTypeName.data
-		chown -R $cmpuser.$cmpuser $CURRENT_DIR
-		chmod 740 "$CURRENT_DIR"
- 	        chmod 740 "$CURRENT_DIR"/*.sh
-		chmod 740 "$CURRENT_DIR"/background
-		chmod 640 "$CURRENT_DIR"/background/*.jar
-		chmod 740 "$CURRENT_DIR"/config
-		chmod 740 "$CURRENT_DIR"/im
-		chmod 640 "$CURRENT_DIR"/im/*.jar
-		chmod 740 "$CURRENT_DIR"/background/*.sh
-		chmod 740 "$CURRENT_DIR"/im/*.sh
-		chmod 640 "$CURRENT_DIR"/im/*.war
-		chmod 600 "$CURRENT_DIR"/my.cnf
-		chmod 600 "$CURRENT_DIR"/colorecho
-		chmod 600 "$CURRENT_DIR"/config/*.yml
-		su $cmpuser
-		umask 077
-	#	rm -rf "$CURRENT_DIR"/data
-		mkdir  "$CURRENT_DIR"/data
-	#	rm -rf "$CURRENT_DIR"/activemq-data
-		mkdir  "$CURRENT_DIR"/activemq-data
-		rm -rf "$CURRENT_DIR"/logs
-		mkdir  "$CURRENT_DIR"/logs
-		rm -rf "$CURRENT_DIR"/temp
-		mkdir  "$CURRENT_DIR"/temp
-		exit
+			echo "复制文件到"$i 
+			#放根目录下
+			scp -r ./ "$i":$CURRENT_DIR
+			#赋权
+			ssh $i <<EOF
+			rm -rf /tmp/spring.log
+			rm -rf /tmp/modelTypeName.data
+			chown -R $cmpuser.$cmpuser $CURRENT_DIR
+			chmod 740 "$CURRENT_DIR"
+ 	        	chmod 740 "$CURRENT_DIR"/*.sh
+			chmod 740 "$CURRENT_DIR"/background
+			chmod 640 "$CURRENT_DIR"/background/*.jar
+			chmod 740 "$CURRENT_DIR"/config
+			chmod 740 "$CURRENT_DIR"/im
+			chmod 640 "$CURRENT_DIR"/im/*.jar
+			chmod 740 "$CURRENT_DIR"/background/*.sh
+			chmod 740 "$CURRENT_DIR"/im/*.sh
+			chmod 640 "$CURRENT_DIR"/im/*.war
+			chmod 600 "$CURRENT_DIR"/my.cnf
+			chmod 600 "$CURRENT_DIR"/colorecho
+			chmod 600 "$CURRENT_DIR"/config/*.yml
+			su $cmpuser
+			umask 077
+	#		rm -rf "$CURRENT_DIR"/data
+			mkdir  "$CURRENT_DIR"/data
+	#		rm -rf "$CURRENT_DIR"/activemq-data
+			mkdir  "$CURRENT_DIR"/activemq-data
+			rm -rf "$CURRENT_DIR"/logs
+			mkdir  "$CURRENT_DIR"/logs
+			rm -rf "$CURRENT_DIR"/temp
+			mkdir  "$CURRENT_DIR"/temp
+			exit
 EOF
-        echo_green "complete"
+		echo_green "complete"
 		done
+	   done
 	    ;;
 	  0) 
 	    echo "nothing to do...."
@@ -227,6 +249,12 @@ EOF
 env_internode(){
         
 		echo_green "配置各节点环境变量开始..."
+		#从文件里读取ip节点组，一行为一个组
+            	for line in $(cat ./haiplist)
+            	do
+                SSH_HOST=($line)
+                echo "复制文件到节点组"
+		local k=1
 		for j in "${SSH_HOST[@]}"
 			do
 			echo "配置节点"$j
@@ -260,6 +288,7 @@ env_internode(){
 			echo "设置nodeno="$nodenor	
 			echo "设置eurekaip="$eurekaipr
 			echo "设置dcname="$dcnamer
+			echo "设置reeurekaip="${HA_HOST[k]}
 
 			echo "节点："$j
 			
@@ -274,7 +303,8 @@ env_internode(){
 			echo "nodetype=$nodetyper export nodetype">>/etc/environment
 			echo "nodeno=$nodenor export nodeno">>/etc/environment 
 			echo "eurekaip=$eurekaipr export eurekaip">>/etc/environment
-			echo "dcname=$dcnamer export dcname">>/etc/environment 			
+			echo "dcname=$dcnamer export dcname">>/etc/environment	
+			echo "reeurekaip=${HA_HOST[k]} export reeurekaip">>/etc/environment
 			source /etc/environment
 
 			su - $cmpuser
@@ -290,13 +320,16 @@ env_internode(){
                         echo "nodetype=$nodetyper export nodetype">>~/.bashrc
                         echo "nodeno=$nodenor export nodeno">>~/.bashrc 
                         echo "eurekaip=$eurekaipr export eurekaip">>~/.bashrc
-                        echo "dcname=$dcnamer export dcname">>~/.bashrc 
+                        echo "dcname=$dcnamer export dcname">>~/.bashrc
+			echo "reeurekaip=${HA_HOST[k]} export reeurekaip">>!/.bashrc
 			source ~/.bashrc
 			exit
 EOF
 		
 		echo "complete..." 
+		let k=k-1
 		done
+	    done
 		echo_green "配置各节点环境变量结束..."
 	
 }
@@ -305,15 +338,25 @@ EOF
 iptable_internode(){
         echo_green "配置各节点iptables开始..."
         local iptable_path=./iptablescmp.sh
-        $iptable_path $SSH_H
-		echo_green "配置各节点iptables结束..."
+        #从文件里读取ip节点组，一行为一个组
+            for line in $(cat ./haiplist)
+            do
+                echo "复制文件到节点组"
+		$iptable_path $line
+	    done
+	echo_green "配置各节点iptables结束..."
 }
 
 #启动cmp
 start_internode(){
-		echo_green "启动CMP开始..."
-		#启动主控节点1或集中式启动串行启动！
-		local k=0
+	echo_green "启动CMP开始..."
+	#启动主控节点1或集中式启动串行启动！
+	local k=0
+	#从文件里读取ip节点组，一行为一个组
+        for line in $(cat ./haiplist)
+        do
+                SSH_HOST=($line)
+                echo "启动节点组"
 		for i in "${SSH_HOST[@]}"
 		do
 			echo "启动节点"$i
@@ -369,13 +412,18 @@ EOF
 		let k=k+1
 		echo "节点检测成功"
 		done
-		echo_green "启动CMP完成..."
+	done
+	echo_green "启动CMP完成..."
 }
 
 #关闭cmp
 stop_internode(){
-		echo_green "关闭CMP开始..."
-		
+	echo_green "关闭CMP开始..."
+	#从文件里读取ip节点组，一行为一个组
+        for line in $(cat ./haiplist)
+        do
+                SSH_HOST=($line)
+                echo "关闭节点组"
 		for i in "${SSH_HOST[@]}"
 		do
 		echo "关闭节点"$i
@@ -396,12 +444,18 @@ EOF
 			exit
 		fi
 		done
-		echo_green "所有节点CMP关闭完成..."
+	done
+	echo_green "所有节点CMP关闭完成..."
 }
 
 #清空安装
 uninstall_internode(){
-		echo_green "清空安装开始..."
+	echo_green "清空安装开始..."
+	#从文件里读取ip节点组，一行为一个组
+        for line in $(cat ./haiplist)
+        do
+                SSH_HOST=($line)
+                echo "删除节点组"
 		for i in "${SSH_HOST[@]}"
 		do
 		echo "删除节点"$i
@@ -421,7 +475,8 @@ uninstall_internode(){
 EOF
 		echo "complete"
 		done
-		echo_green "清空安装完成..."
+	done
+	echo_green "清空安装完成..."
 }
 
 #安装单机版mysql5.7
