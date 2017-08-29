@@ -11,7 +11,7 @@ dcnamer="DC1"
 JDK_DIR="/usr/java/jdk1.8.0_131"
 MYSQL_DIR="/usr/local/mysql"
 MONGDO_DIR="/usr/local/mongodb"
-
+REDIS_DIR="/usr/local/redis"
 
 #---------------可修改配置参数------------------
 #安装目录
@@ -19,12 +19,8 @@ CURRENT_DIR="/springcloudcmp"
 #用户名，密码
 cmpuser="cmpimuser"
 cmppass="Pbu4@123"
-#MYSQLIP 单机
-MYSQL_H="10.143.132.187"
-#MYSQL相关密码
-MYSQL_ROOT_PASSWORD="Pbu4@123"
-MYSQL_EVUSER_PASSWORD="Pbu4@123"
-MYSQL_IM_PASSWORD="Pbu4@123"
+#REDISIP 空格格开
+REDIS_H="10.143.132.187 10.143.132.190"
 #MONGOIP 单机
 MONGDO_H="10.143.132.187"
 MONGDO_PASSWORD="Pbu4@123"
@@ -34,6 +30,7 @@ HA_H="10.143.132.187 10.143.132.190"
 #-----------------------------------------------
 declare -a SSH_HOST=()
 declare -a HA_HOST=($HA_H)
+declare -a REDIS_HOST=($REDIS_H)
 
 #检测操作系统
 check_ostype(){
@@ -101,6 +98,30 @@ install-interpackage(){
                                          ssh $i rpm -Uvh ~/psmisc-22.20-11.el7.x86_64.rpm
                                  fi
                          fi
+			 local gcc=`ssh  "$i" rpm -qa |grep gcc |wc -l`
+                         if [ "$gcc" -gt 0 ]; then
+                                echo "gcc 已安装"
+                         else
+                                if [ "${ostype}" == "centos_6" ]; then
+                                         scp  ../packages/centos6_gcc/* "$i":/root/
+                                         ssh $i rpm -Uvh --replacepkgs ~/*
+                                 elif [ "${ostype}" == "centos_7" ]; then
+                                         scp ../packages/centos7_gcc/* "$i":/root/
+                                         ssh $i rpm -Uvh --replacepkgs  ~/*
+                                 fi
+                         fi
+                         local tcl=`ssh  "$i" rpm -qa |grep tcl |wc -l`
+                         if [ "$tcl" -gt 0 ]; then
+                                echo "tcl 已安装"
+                         else
+                                if [ "${ostype}" == "centos_6" ]; then
+                                         scp  ../packages/centos6_tcl/* "$i":/root/
+                                         ssh $i rpm -Uvh --replacepkgs ~/tcl-8.5.7-6.el6.x86_64.rpm
+                                 elif [ "${ostype}" == "centos_7" ]; then
+                                         scp ../packages/centos7_tcl/* "$i":/root/
+                                         ssh $i rpm -Uvh --replacepkgs  ~/tcl-8.5.13-8.el7.x86_64.rpm
+                                 fi
+                         fi
 		elif [ "$os" == "ubuntu" ]; then
 			if [ "$ostype" == "ubuntu_12" ]; then
 				echo_red "$ostype"暂不提供安装
@@ -152,6 +173,24 @@ EOF
 	echo "complete...."
 	done
 	echo_green "检测安装环境完成..."
+}
+
+#安装redis
+install_redis(){
+	echo_green "安装redis开始..."
+	for i in "${REDIS_HOST[@]}"
+                do
+                echo "安装节点..."$i
+		ssh "$i" mkdir -p "$REDIS_DIR"
+                scp -r ../packages/redis/* "$i":"$REDIS_DIR"
+                ssh $i <<EOF
+		cd $REDIS_DIR
+		make 
+		make install
+EOF
+		echo "complete..."
+	done
+	echo_green "安装redis完成..."
 }
 
 #建立对等互信
@@ -288,7 +327,7 @@ env_internode(){
 			echo "设置nodeno="$nodenor	
 			echo "设置eurekaip="$eurekaipr
 			echo "设置dcname="$dcnamer
-			echo "设置reeurekaip="${HA_HOST[k]}
+			echo "设置eurekaiprep="${HA_HOST[k]}
 
 			echo "节点："$j
 			
@@ -303,9 +342,7 @@ env_internode(){
 			echo "nodetype=$nodetyper export nodetype">>/etc/environment
 			echo "nodeno=$nodenor export nodeno">>/etc/environment 
 			echo "eurekaip=$eurekaipr export eurekaip">>/etc/environment
-			echo "dcname=$dcnamer export dcname">>/etc/environment	
-			echo "reeurekaip=${HA_HOST[k]} export reeurekaip">>/etc/environment
-			source /etc/environment
+			echo "dcname=$dcnamer export dcname">>/etc/environment
 
 			su - $cmpuser
 			sed -i /nodeplan/d ~/.bashrc
@@ -321,7 +358,28 @@ env_internode(){
                         echo "nodeno=$nodenor export nodeno">>~/.bashrc 
                         echo "eurekaip=$eurekaipr export eurekaip">>~/.bashrc
                         echo "dcname=$dcnamer export dcname">>~/.bashrc
-			echo "reeurekaip=${HA_HOST[k]} export reeurekaip">>!/.bashrc
+			exit
+EOF
+			#HA配置
+			local hanode="main"
+			local eurekaiprep="${HA_HOST[k]}"
+			if [ "$k" -eq 1 ]; then
+				hanode="main"
+			elif [ "$k" -eq 0 ]; then
+                        	hanode="rep"
+			fi
+			
+			ssh $j <<EOF
+			sed -i /eurekaiprep/d /etc/environmente
+			sed -i /hanode/d /etc/environment
+			echo "eurekaiprep=$eurekaiprep export eurekaiprep">>/etc/environment
+			echo "hanode=$hanode export hanode">>/etc/environment
+			source /etc/profile
+			su - $cmpuser
+			sed -i /eurekaiprep/d ~/.bashrc
+			sed -i /hanode/d ~/.bashrc
+			echo "eurekaiprep=$eurekaiprep export eurekaiprep">>~/.bashrc
+			echo "hanode=$hanode export hanode">>~/.bashrc
 			source ~/.bashrc
 			exit
 EOF
@@ -689,11 +747,11 @@ iptables-mongo(){
 }
 
 echo_yellow "-----------一键安装说明-------------------"
-echo_yellow "1、可安装JDK1.8.0_131软件;"
-echo_yellow "2、可安装MYSQL5.7.19软件;"
-echo_yellow "3、可安装有iptables lsof软件;"
-echo_yellow "4、初始化时，建议使用root用户安装;"
-echo_yellow "5、确保.sh有执行权限，并且使用 ./xxx.sh执行;"
+echo_yellow "1、可安装mysql5.7;"
+echo_yellow "2、可安装mongodb3.4.7;"
+echo_yellow "3、可安装redisHA;"
+echo_yellow "4、可安装keepalived;"
+echo_yellow "5、可安装IM;"
 echo_yellow "6、可清空部署环境。"
 
 echo_yellow "-------------------------------------------"
@@ -704,9 +762,7 @@ echo "1-----allinone服务器,每台32G内存."
 echo "2-----3台服务器,每台16G内存.2台控制节点，1台采集节点"  
 echo "3-----4台服务器,每台16G内存.3台控制节点，1台采集节点"  
 echo "4-----6台服务器,每台8G内存.5台控制节点，1台采集节点"
-echo "5-----安装单机版mysql5.7"
-echo "6-----清空部署(数据库不受影响，但升级环境禁止使用)"
-echo "7-----安装单机版mongo3.4.7"
+echo "5-----清空部署(数据库不受影响，但升级环境禁止使用)"
 
 while read item
 do
