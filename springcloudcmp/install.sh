@@ -8,10 +8,11 @@ nodeplanr=1
 nodenor=1
 eurekaipr=localhost
 dcnamer="DC1"
-JDK_DIR="/usr/java/jdk1.8.0_131"
+JDK_DIR="/usr/java"
 MYSQL_DIR="/usr/local/mysql"
 MONGDO_DIR="/usr/local/mongodb"
 REDIS_DIR="/usr/local/redis"
+KEEPALIVED_DIR="/usr/local/keepalived"
 
 #---------------可修改配置参数------------------
 #安装目录
@@ -19,11 +20,11 @@ CURRENT_DIR="/springcloudcmp"
 #用户名，密码
 cmpuser="cmpimuser"
 cmppass="Pbu4@123"
-#REDISIP 空格格开
-REDIS_H="10.143.132.187 10.143.132.190"
-#MONGOIP 单机
-MONGDO_H="10.143.132.187"
-MONGDO_PASSWORD="Pbu4@123"
+#REDISIP 主IP，从IP，仲裁IP 空格格开(仅支持配置三个节点IP)
+REDIS_H="10.143.132.187 10.143.132.190 10.143.132.196"
+#MONGOIP 主IP,从IP，仲裁IP 空格格开(仅支持配置三个节点IP)
+MONGO_H="10.143.132.187 10.143.132.190 10.143.132.196"
+MONGO_PASSWORD="Pbu4@123"
 #主主控节点，备主控节点 空格格开
 HA_H="10.143.132.187 10.143.132.190"
 #haiplist文件放HA节点ip组
@@ -31,6 +32,7 @@ HA_H="10.143.132.187 10.143.132.190"
 declare -a SSH_HOST=()
 declare -a HA_HOST=($HA_H)
 declare -a REDIS_HOST=($REDIS_H)
+declare -a MONGO_HOST=($MONGO_H)
 
 #检测操作系统
 check_ostype(){
@@ -99,15 +101,24 @@ install-interpackage(){
                                  fi
                          fi
 			 local gcc=`ssh  "$i" rpm -qa |grep gcc |wc -l`
-                         if [ "$gcc" -gt 0 ]; then
+                         if [ "$gcc" -gt 1 ]; then
                                 echo "gcc 已安装"
                          else
                                 if [ "${ostype}" == "centos_6" ]; then
-                                         scp  ../packages/centos6_gcc/* "$i":/root/
-                                         ssh $i rpm -Uvh --replacepkgs ~/*
+                                         scp -r  ../packages/centos6_gcc "$i":/root/
+                                         ssh $i rpm -Uvh --replacepkgs ~/centos6_gcc/*
+					 ssh $i <<EOF
+                                             rpm -Uvh --replacepkgs ~/centos6_gcc/*
+					     rm -rf ~/centos6_gcc
+                                             exit
+EOF
                                  elif [ "${ostype}" == "centos_7" ]; then
-                                         scp ../packages/centos7_gcc/* "$i":/root/
-                                         ssh $i rpm -Uvh --replacepkgs  ~/*
+                                         scp -r ../packages/centos7_gcc "$i":/root/
+					 ssh $i <<EOF
+                                             rpm -Uvh --replacepkgs ~/centos7_gcc/*
+					     rm -rf ~/centos7_gcc
+                                             exit
+EOF
                                  fi
                          fi
                          local tcl=`ssh  "$i" rpm -qa |grep tcl |wc -l`
@@ -140,7 +151,7 @@ install-interpackage(){
                 echo "安装jdk1.8到节点"$i
 		ssh "$i" mkdir -p "$JDK_DIR"
 			
-		scp -r ../packages/jdk1.8.0_131/* "$i":"$JDK_DIR"
+		scp -r ../packages/jdk/* "$i":"$JDK_DIR"
 		scp ../packages/jce/* "$i":"$JDK_DIR"/jre/lib/security/
 		ssh $i  <<EOF
 		    chmod 755 "$JDK_DIR"/bin/*
@@ -175,20 +186,53 @@ EOF
 	echo_green "检测安装环境完成..."
 }
 
-#安装redis
+#安装redis 1主2从3哨兵
 install_redis(){
 	echo_green "安装redis开始..."
+	local k=1
+	local mip="${REDIS_HOST[0]}"
+	local mport=7000
+	local rport=7000
+	local sport=7001
 	for i in "${REDIS_HOST[@]}"
                 do
                 echo "安装节点..."$i
 		ssh "$i" mkdir -p "$REDIS_DIR"
                 scp -r ../packages/redis/* "$i":"$REDIS_DIR"
-                ssh $i <<EOF
+                #编译安装
+		ssh $i <<EOF
 		cd $REDIS_DIR
 		make 
 		make install
 EOF
+		#1主1哨，2从2哨
+		if [ "$k" -eq 1 ]; then
+                        scp ./redismaster.conf "$i":"$REDIS_DIR"/redismaster.conf
+			ssh $i <<EOF
+			sed -i 's/redismport/$mport/g' "$REDIS_DIR"/redismaster.conf
+			sed -i 's/redismip/$i/g' "$REDIS_DIR"/redismaster.conf
+			redis-server "$REDIS_DIR"/redismaster.conf
+EOF
+                elif [ "$k" -gt 1 ]; then
+			scp ./redisslave.conf "$i":"$REDIS_DIR"/redisslave.conf
+			ssh $i <<EOF
+                        sed -i 's/redisrport/$rport/g' "$REDIS_DIR"/redisslave.conf
+			sed -i 's/redismport/$mport/g' "$REDIS_DIR"/redisslave.conf
+                        sed -i 's/redisrip/$i/g' "$REDIS_DIR"/redisslave.conf
+			sed -i 's/redismip/$mip/g' "$REDIS_DIR"/redisslave.conf
+                        redis-server "$REDIS_DIR"/redisslave.conf
+EOF
+                fi
+			scp ./redissentinel.conf "$i":"$REDIS_DIR"/redissentinel.conf
+                        ssh $i <<EOF
+                        sed -i 's/redismport/$mport/g' "$REDIS_DIR"/redissentinel.conf
+			sed -i 's/redissport/$sport/g' "$REDIS_DIR"/redissentinel.conf
+                        sed -i 's/redissip/$i/g' "$REDIS_DIR"/redissentinel.conf
+			sed -i 's/redismip/$mip/g' "$REDIS_DIR"/redissentinel.conf
+                        redis-sentinel "$REDIS_DIR"/redissentinel.conf
+EOF
 		echo "complete..."
+	let k=k+1
 	done
 	echo_green "安装redis完成..."
 }
@@ -332,7 +376,7 @@ env_internode(){
 			echo "节点："$j
 			
 			ssh $j <<EOF
-                        sed -i /nodeplan/d /etc/environment
+            		sed -i /nodeplan/d /etc/environment
 			sed -i /nodetype/d /etc/environment
 			sed -i /nodeno/d /etc/environment
 			sed -i /eurekaip/d /etc/environment
@@ -405,6 +449,64 @@ iptable_internode(){
 	echo_green "配置各节点iptables结束..."
 }
 
+#keeplived安装配置
+keeplived_settings(){
+	echo_green "配置keeplived安装配置开始..."
+	k=100
+
+	for line in $(cat ./haiplist)
+        do
+	SSH_HOST=($line)
+        echo "复制文件到节点组"
+	for i in "${SSH_HOST[@]}"
+	do
+	echo "配置节点"$i
+	#需在满足条件下才能安装
+	local nplan=`ssh $cmpuser@$i echo \$nodeplan`
+        local ntype=`ssh $cmpuser@$i echo \$nodetype`
+        local nno=`ssh $cmpuser@$i echo \$nodeno`
+	if [ "$nplan" = "1" ] || [ "$ntype" = "1" -a "$nplan" = "2" -a "$nno" = "1" ] || [ "$ntype" = "1" -a "$nplan" = "3" -a "$nno" = "1" ] || [ "$ntype" = "1" -a "$nplan" = "4" -a "$nno" = "1" ] || [ "$ntype" = "3" -a "$nplan" = "2" -a "$nno" = "1" ] || [ "$ntype" = "3" -a "$nplan" = "3" -a "$nno" = "1" ] || [ "$ntype" = "3" -a "$nplan" = "4" -a "$nno" = "1" ] ; then
+	#centos7对于keepalived在/etc/init.d/没有脚本，需单独复制
+	local ostype=`check_ostype $i`
+	local keepalived=`ssh  "$i" rpm -qa |grep keepalived |wc -l`
+	if [ "$keepalived" -gt 0 ]; then
+		echo "keepalived 已安装"
+	else
+		if [ "$ostype" == "centos_6" ]; then
+			scp -r ../packages/centos6_keepalived "$i":/root/
+			ssh $i <<EOF
+                        rpm -Uvh --replacepkgs ~/centos6_keepalived/*
+                        exit
+EOF
+		elif [ "$ostype" == "centos_7" ]; then
+			scp -r ../packages/centos7_keepalived "$i":/root/
+			scp ./keepalived "$i":/etc/init.d/
+			ssh $i <<EOF
+			rpm -Uvh --replacepkgs ~/centos7_keepalived/*
+			exit
+EOF
+					
+		fi
+	fi
+	ssh $i mkdir -p "$KEEPALIVED_DIR"
+	scp ./keepalived.conf "$i":/etc/keepalived/
+	scp ./checkZuul.sh "$i":"$KEEPALIVED_DIR"
+
+	ssh $i <<EOF
+		chmod 740 /usr/local/keepalived/checkZuul.sh
+		chmod 740 /etc/init.d/keepalived
+		sed -i '/prioweight/{s/prioweight/$k/}' /etc/keepalived/keepalived.conf
+		sed -i '/vip/{s/vip/$VIP/}' /etc/keepalived/keepalived.conf
+		/etc/init.d/keepalived restart
+		exit
+EOF
+	let k=k-10
+	echo "complete..."
+	fi
+	done
+	done
+	echo_green "配置keeplived配置完成..."
+}
 #启动cmp
 start_internode(){
 	echo_green "启动CMP开始..."
@@ -548,7 +650,7 @@ ssh-mysqlconnect(){
 
 mysql_install(){
 	# echo_yellow "仅限于初始于安装！！"
-	echo_green "安装单机版mysql5.7.19开始"
+	echo_green "安装单机版mysql5.7开始"
 	local ostype=`check_ostype $MYSQL_H`
 	local os=`echo $ostype | awk -F _ '{print $1}'`
         if [ "$os" == "centos" ]; then
@@ -640,7 +742,7 @@ mysql_install(){
         fi
 		echo_green "复制文件"
 		ssh "$MYSQL_H" mkdir -p "$MYSQL_DIR"
-		scp -r ../packages/mysql-5.7.19/* "$MYSQL_H":"$MYSQL_DIR"
+		scp -r ../packages/mysql/* "$MYSQL_H":"$MYSQL_DIR"
 		ssh $MYSQL_H <<EOF
 		echo "创建mysql用户"
 		groupadd mysql
@@ -689,41 +791,55 @@ iptables-mysql(){
 ssh-mysqlconnect(){
     echo_green "建立对等互信开始..."
         local ssh_init_path=./ssh-init.sh
-        $ssh_init_path $MONGDO_H
+        $ssh_init_path $MONGO_H
         echo_green "建立对等互信完成..."
         sleep 1
 }
 
+#mongodb安装配置
 mongo_install(){
-		echo_green "安装单机版mongodb3.4.7开始"
-		echo "复制文件"
-		ssh "$MONGDO_H" mkdir -p "$MONGDO_DIR"
-		scp -r ../packages/mongo-3.4.7/* "$MONGDO_H":"$MONGDO_DIR"
-		ssh $MONGDO_H <<EOF
+	echo_green "安装mongodb开始"
+	local k=1
+	for i in "${MONGO_HOST[@]}"
+        do
+                echo "安装节点..."$i
+		ssh "$i" mkdir -p "$MONGDO_DIR"
+		scp -r ../packages/mongo/* "$i":"$MONGDO_DIR"
+		ssh $i <<EOF
 		echo "创建mongo用户"
 		groupadd mongo
 		useradd -r -m -g  mongo mongo
 		echo "修改文件权限"
 		chown -R mongo.mongo $MONGDO_DIR
 		chmod 700 $MONGDO_DIR/bin/*
+		chmod 600 $MONGDO_DIR/mongo.key
 		su - mongo
 		cd $MONGDO_DIR
 		umask 077
 		mkdir -p data/logs
 		mkdir -p data/db
 		echo "start mongodb"
-		nohup ./bin/mongod --dbpath=$MONGDO_DIR/data/db --logpath=$MONGDO_DIR/data/logs/mongodb.log  &>/dev/null &
+		nohup ./bin/mongod --dbpath=$MONGDO_DIR/data/db --logpath=$MONGDO_DIR/data/logs/mongodb.log --replSet dbReplSet  &>/dev/null &
 		echo "配置环境变量"
 		sed -i /mongo/d ~/.bashrc
 		echo export PATH=$MONGDO_DIR/bin:'\$PATH' >> ~/.bashrc
 		source ~/.bashrc
 		exit
 EOF
-	scp ./init_mongo.sh "$MYSQL_H":/root/
-	#设置mongdodb密码	 
-	ssh $MONGDO_H /root/init_mongo.sh "$MONGDO_PASSWORD"
+	echo "complete..."
+	done
+	echo "配置monogo"
+	for i in "${MONGO_HOST[@]}"
+	do
+		if [ "$k" -eq 1 ]; then
+		scp ./init_mongo.sh "$i":/root/
+		#设置mongdodb密码	
+		declare -a MONGOS=($MONGO_H $MONGO_PASSWORD) 
+		ssh $i /root/init_mongo.sh "${MONGOS[@]}"
+	fi
+	let k=k+1
 	echo "设置需验证登录"
-	ssh $MONGDO_H <<EOF
+	ssh $i <<EOF
 		pkill mongod
 		su - mongo
 		cd $MONGDO_DIR
@@ -735,6 +851,8 @@ EOF
 	sed -i /mongo/d /etc/rc.d/rc.local
 	echo " $MONGDO_DIR/bin/mongod --config $MONGDO_DIR/mongodb.conf" >> /etc/rc.d/rc.local
 	chmod u+x /etc/rc.d/rc.local
+	echo "complete..."
+	done
 	echo_green "安装完成"
 }
 
@@ -748,7 +866,7 @@ iptables-mongo(){
 
 echo_yellow "-----------一键安装说明-------------------"
 echo_yellow "1、可安装mysql5.7;"
-echo_yellow "2、可安装mongodb3.4.7;"
+echo_yellow "2、可安装mongodb3;"
 echo_yellow "3、可安装redisHA;"
 echo_yellow "4、可安装keepalived;"
 echo_yellow "5、可安装IM;"
@@ -763,6 +881,7 @@ echo "2-----3台服务器,每台16G内存.2台控制节点，1台采集节点"
 echo "3-----4台服务器,每台16G内存.3台控制节点，1台采集节点"  
 echo "4-----6台服务器,每台8G内存.5台控制节点，1台采集节点"
 echo "5-----清空部署(数据库不受影响，但升级环境禁止使用)"
+echo "6-----安装mongodbHA"
 
 while read item
 do
@@ -774,6 +893,7 @@ do
 		install-interpackage
 		copy-internode
 		env_internode
+		keeplived_settings
 		iptable_internode
 		start_internode
         break
@@ -785,6 +905,7 @@ do
 		install-interpackage
 		copy-internode
 		env_internode
+		keeplived_settings
 		iptable_internode
 		start_internode
         break
@@ -796,6 +917,7 @@ do
 		install-interpackage
 		copy-internode
 		env_internode
+		keeplived_settings
 		iptable_internode
 		start_internode
         break
@@ -807,25 +929,20 @@ do
 		install-interpackage
 		copy-internode
 		env_internode
+		keeplived_settings
 		iptable_internode
 		start_internode
         break
         ;;
      [5])
-		ssh-mysqlconnect
-		mysql_install
-		iptables-mysql
-	break;
-	;;
-     [6])
 		ssh-interconnect
 		stop_internode
 		uninstall_internode
 	break;
 	;;
-     [7])
+     [6])
 		ssh-mysqlconnect
-       		mongo_install
+		mongo_install
 		iptables-mongo
 	break;
 	;;
@@ -838,3 +955,4 @@ do
         ;;
   esac
 done
+

@@ -10,9 +10,10 @@ ostype=`ssh $i head -n 1 /etc/issue | awk '{print $1}'`
 ssh  $i <<EOF
 
 		iptables -P INPUT ACCEPT
-		iptables -D INPUT -p tcp --dport 27017 -j ACCEPT
-		iptables -A INPUT -p tcp --dport 27017 -j ACCEPT
+		iptables -D INPUT -p tcp --dport 31001 -j ACCEPT
+		iptables -A INPUT -p tcp --dport 31001 -j ACCEPT
 		iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+		iptables -A INPUT -p tcp --dport 22 -j ACCEPT
 		iptables -P INPUT DROP
 		exit
 EOF
