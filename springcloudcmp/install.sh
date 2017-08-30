@@ -27,12 +27,13 @@ MONGO_H="10.143.132.187 10.143.132.190 10.143.132.196"
 MONGO_PASSWORD="Pbu4@123"
 #主主控节点，备主控节点 空格格开
 HA_H="10.143.132.187 10.143.132.190"
-#haiplist文件放HA节点ip组
+#haiplist文件存放HA节点ip组
 #-----------------------------------------------
 declare -a SSH_HOST=()
 declare -a HA_HOST=($HA_H)
 declare -a REDIS_HOST=($REDIS_H)
 declare -a MONGO_HOST=($MONGO_H)
+declare -a nodes=()
 
 #检测操作系统
 check_ostype(){
@@ -333,6 +334,7 @@ env_internode(){
         
 		echo_green "配置各节点环境变量开始..."
 		#从文件里读取ip节点组，一行为一个组
+		cat /dev/null > ./im.config
             	for line in $(cat ./haiplist)
             	do
                 SSH_HOST=($line)
@@ -342,27 +344,38 @@ env_internode(){
 			do
 			echo "配置节点"$j
 			
-			if [ $nodeplanr -ne 1 ]; then
-			echo "节点类型，请输入编号："  
-			echo "1-----控制节点."  
-			echo "2-----采集节点."    
-			echo "3-----控制以及采集节点."    
-			read nodetyper 
+			if [ "$k" -eq 1 ]; then
+				if [ $nodeplanr -ne 1 ]; then
+				echo "节点类型，请输入编号："  
+				echo "1-----控制节点."  
+				echo "2-----采集节点."    
+				echo "3-----控制以及采集节点."    
+				read nodetyper 
 			
-			if [ $nodetyper -eq 1 ]; then
-			echo "当前控制节点编号请按照1,2,3等顺序编写："  
-			read nodenor
+				if [ $nodetyper -eq 1 ]; then
+				echo "当前控制节点编号请按照1,2,3等顺序编写："  
+				read nodenor
+				fi
+			
+				echo "1号控制节点IP："  
+				read eurekaipr 
+				fi
+			
+				if [ $nodetyper -eq 2 ] || [ $nodetyper -eq 3 ]; then
+				read -t 5 -p "请输入采集节点名称，如DC1:" dcnamer
+                        	dcnamer=${dcnamer:-"DC1"}
+				fi
+				
+			else
+				 lines =`sed -n '"$t"p' ./im.config`
+				 nodes=($lines)
+				 nodeplanr=${nodes[0]}
+				 nodetyper=${nodes[1]}
+				 nodenor=${nodes[2]}
+				 eurekaipr=${HA_HOST[1]}
+				 dcnamer=${nodes[3]}
+				
 			fi
-			
-			echo "1号控制节点IP："  
-			read eurekaipr 
-			fi
-			
-			if [ $nodetyper -eq 2 ] || [ $nodetyper -eq 3 ]; then
-			read -t 5 -p "请输入采集节点名称，如DC1:" dcnamer
-                        dcnamer=${dcnamer:-"DC1"}
-			fi
-			
 
 			
 			
@@ -427,10 +440,13 @@ EOF
 			source ~/.bashrc
 			exit
 EOF
+			#写文件，给第二个组使用
+			echo $nodeplanr $nodetyper $nodenor $dcnamer >>./im.config
+			
 		
 		echo "complete..." 
-		let k=k-1
 		done
+		let k=k-1
 	    done
 		echo_green "配置各节点环境变量结束..."
 	
@@ -788,7 +804,7 @@ iptables-mysql(){
 }
 
 #单机mongodb安装
-ssh-mysqlconnect(){
+ssh-mongoconnect(){
     echo_green "建立对等互信开始..."
         local ssh_init_path=./ssh-init.sh
         $ssh_init_path $MONGO_H
@@ -856,13 +872,6 @@ EOF
 	echo_green "安装完成"
 }
 
-#mongo服务器iptables配置
-iptables-mongo(){
-        echo_green "配置iptables开始..."
-        local iptable_path=./iptablesmongo.sh
-        $iptable_path $MONGO_H
-        echo_green "配置iptables完成..."
-}
 
 echo_yellow "-----------一键安装说明-------------------"
 echo_yellow "1、可安装mysql5.7;"
@@ -880,8 +889,7 @@ echo "1-----allinone服务器,每台32G内存."
 echo "2-----3台服务器,每台16G内存.2台控制节点，1台采集节点"  
 echo "3-----4台服务器,每台16G内存.3台控制节点，1台采集节点"  
 echo "4-----6台服务器,每台8G内存.5台控制节点，1台采集节点"
-echo "5-----清空部署(数据库不受影响，但升级环境禁止使用)"
-echo "6-----安装mongodbHA"
+echo "5-----清空部署(mysql,redis,mongo不受影响，但升级环境禁止使用)"
 
 while read item
 do
@@ -891,6 +899,8 @@ do
 		ssh-interconnect
 		user-internode
 		install-interpackage
+		install_redis
+		mongo_install
 		copy-internode
 		env_internode
 		keeplived_settings
@@ -903,6 +913,8 @@ do
 		ssh-interconnect
 		user-internode
 		install-interpackage
+		install_redis
+		mongo_install
 		copy-internode
 		env_internode
 		keeplived_settings
@@ -915,6 +927,8 @@ do
 		ssh-interconnect
 		user-internode
 		install-interpackage
+		install_redis
+		mongo_install
 		copy-internode
 		env_internode
 		keeplived_settings
@@ -927,6 +941,8 @@ do
 		ssh-interconnect
 		user-internode
 		install-interpackage
+		install_redis
+		mongo_install
 		copy-internode
 		env_internode
 		keeplived_settings
@@ -938,12 +954,6 @@ do
 		ssh-interconnect
 		stop_internode
 		uninstall_internode
-	break;
-	;;
-     [6])
-		ssh-mysqlconnect
-		mongo_install
-		iptables-mongo
 	break;
 	;;
      0)
