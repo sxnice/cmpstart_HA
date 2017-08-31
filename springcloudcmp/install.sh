@@ -489,7 +489,7 @@ keeplived_settings(){
 	do
 	echo "配置节点"$i
 	#需在满足条件下才能安装
-		local nplan=`ssh $i echo \\$nodeplan`
+	local nplan=`ssh $i echo \\$nodeplan`
         local ntype=`ssh $i echo \\$nodetype`
         local nno=`ssh $i echo \\$nodeno`
 	if [ "$nplan" = "1" ] || [ "$ntype" = "1" -a "$nplan" = "2" -a "$nno" = "1" ] || [ "$ntype" = "1" -a "$nplan" = "3" -a "$nno" = "1" ] || [ "$ntype" = "1" -a "$nplan" = "4" -a "$nno" = "1" ] || [ "$ntype" = "3" -a "$nplan" = "2" -a "$nno" = "1" ] || [ "$ntype" = "3" -a "$nplan" = "3" -a "$nno" = "1" ] || [ "$ntype" = "3" -a "$nplan" = "4" -a "$nno" = "1" ] ; then
