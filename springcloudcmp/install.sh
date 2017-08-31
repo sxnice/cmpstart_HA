@@ -270,13 +270,12 @@ ssh-interconnect(){
 
 #创建普通用户cmpimuser
 user-internode(){
-	echo_green "建立普通用户cmpimuser开始..."
+	echo_green "建立用户开始..."
 	local ssh_pass_path=./ssh-pass.sh
         #从文件里读取ip节点组，一行为一个组
         for line in $(cat ./haiplist)
         do
         	SSH_HOST=($line)
-        	echo "检测节点组"
 		$ssh_pass_path $line
 		for i in "${SSH_HOST[@]}"
 		do
@@ -285,13 +284,13 @@ user-internode(){
 EOF
 		done
 	done
-	echo_green "建立普通用户cmpimuser完成..."
+	echo_green "建立用户完成..."
         
 }
 
 #复制IM文件到各节点
 copy-internode(){
-     echo_green "复制IM文件到各节点开始..."
+     echo_green "复制IM文件开始..."
      
      case $nodeplanr in
 	  [1-4]) #部署
@@ -299,7 +298,6 @@ copy-internode(){
             for i in $(cat haiplist)
             do
 		SSH_HOST=($line)
-		echo "复制文件到节点组"
 		for i in "${SSH_HOST[@]}"
 		do
 			echo "复制文件到"$i 
@@ -335,7 +333,7 @@ copy-internode(){
 			mkdir  "$CURRENT_DIR"/temp
 			exit
 EOF
-		echo_green "complete"
+		echo "complete..."
 		done
 	   done
 	    ;;
@@ -343,19 +341,19 @@ EOF
 	    echo "nothing to do...."
 	    ;;
 	 esac
-	echo_green "复制IM文件到各节点完成..."
+	echo_green "复制IM文件完成..."
 }
 
-#配置各节点环境变量
+#配置各节点IM参数
 env_internode(){
         
-		echo_green "配置各节点环境变量开始..."
+		echo_green "配置IM参数开始..."
 		#从文件里读取ip节点组，一行为一个组
 		cat /dev/null > ./im.config
 		local k=0
             	cat ./haiplist | while read line
             	do
-                echo "复制文件到节点组"
+                echo "节点组配置开始"
 		local t=1
 		SSH_HOST=($line)
 		for j in "${SSH_HOST[@]}"
@@ -475,7 +473,7 @@ EOF
 
 #配置iptables
 iptable_internode(){
-        echo_green "配置各节点iptables开始..."
+        echo_green "配置iptables开始..."
         local iptable_path=./iptablescmp.sh
 	local im_iplists=""
         #从文件里读取ip节点组，一行为一个组
@@ -483,23 +481,18 @@ iptable_internode(){
 	do
 		im_iplists=${im_iplists}" "${line}
 	done
-                echo "复制文件到节点组"
 		$iptable_path $im_iplists
 	    
-	echo_green "配置各节点iptables结束..."
+	echo_green "配置iptables结束..."
 }
 
 #keeplived安装配置
 keeplived_settings(){
-	echo_green "配置keeplived安装配置开始..."
+	echo_green "配置keeplived开始..."
 	k=100
 
 	for line in $(cat ./haiplist)
         do
-	SSH_HOST=($line)
-        echo "复制文件到节点组"
-	for i in "${SSH_HOST[@]}"
-	do
 	echo "配置节点"$i
 	#需在满足条件下才能安装
 	local nplan=`ssh $i echo \\$nodeplan`
@@ -543,7 +536,6 @@ EOF
 	let k=k-10
 	echo "complete..."
 	fi
-	done
 	done
 	echo_green "配置keeplived配置完成..."
 }
@@ -620,8 +612,8 @@ EOF
 stop_internode(){
 	echo_green "关闭CMP开始..."
 	#从文件里读取ip节点组，一行为一个组
-        for line in $(cat ./haiplist)
-        do
+        cat haiplist | while read line
+	do
                 SSH_HOST=($line)
                 echo "关闭节点组"
 		for i in "${SSH_HOST[@]}"
@@ -673,7 +665,7 @@ uninstall_internode(){
 		iptables-save > /etc/sysconfig/iptables
 		exit
 EOF
-		echo "complete"
+		echo "complete..."
 		done
 	done
 	echo_green "清空安装完成..."
@@ -827,14 +819,6 @@ iptables-mysql(){
 	echo_green "配置iptables完成..."
 }
 
-#单机mongodb安装
-ssh-mongoconnect(){
-    echo_green "建立对等互信开始..."
-        local ssh_init_path=./ssh-init.sh
-        $ssh_init_path $MONGO_H
-        echo_green "建立对等互信完成..."
-        sleep 1
-}
 
 #mongodb安装配置
 mongo_install(){
