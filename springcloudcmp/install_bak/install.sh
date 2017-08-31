@@ -348,7 +348,7 @@ env_internode(){
 			
 			echo "配置节点"$j
 			
-			if [ "$k" -eq 0 ]; then
+			if [ "$k" -eq 1 ]; then
 				if [ $nodeplanr -ne 1 ]; then
 				echo "节点类型，请输入编号："  
 				echo "1-----控制节点."  
@@ -369,7 +369,7 @@ env_internode(){
 				read -t 5 -p "请输入采集节点名称，如DC1:" dcnamer
                         	dcnamer=${dcnamer:-"DC1"}
 				fi
-				eurekaiprepr=${HA_HOST[1]}
+				eurekaiprepr=${HA_HOST[k]}
 				hanoder="main"
 				#写文件，给第二个组使用
 				echo $nodeplanr $nodetyper $nodenor $dcnamer "rep" >> ./im.config
@@ -381,9 +381,9 @@ env_internode(){
 				 nodeplanr=${nodes[0]}
 				 nodetyper=${nodes[1]}
 				 nodenor=${nodes[2]}
-				 eurekaipr=${HA_HOST[0]}
+				 eurekaipr=$j
 				 dcnamer=${nodes[3]}
-				 eurekaiprepr=${HA_HOST[1]}
+				 eurekaiprepr=${HA_HOST[k]}
 				 hanoder=${nodes[4]}
 				
 			fi
@@ -419,12 +419,10 @@ env_internode(){
                         sed -i /nodeno/d ~/.bashrc
                         sed -i /eurekaip/d ~/.bashrc
                         sed -i /dcname/d ~/.bashrc
-			sed -i /umask/d ~/.bashrc
-			sed -i /CURRENT_DIR/d ~/.bashrc
 			
 			echo "umask 077" >> ~/.bashrc
 			echo "CURRENT_DIR=$CURRENT_DIR export CURRENT_DIR" >> ~/.bashrc
-			echo "nodeplan=$nodeplanr">>~/.bashrc
+						echo "nodeplan=$nodeplanr">>~/.bashrc
                         echo "nodetype=$nodetyper">>~/.bashrc
                         echo "nodeno=$nodenor">>~/.bashrc 
                         echo "eurekaip=$eurekaipr">>~/.bashrc
@@ -452,7 +450,7 @@ EOF
 		let t=t+1
 		done
 		echo "节点组配置完成..."
-		let k=k+1
+		let k=k-1
 	    done
 		echo_green "配置各节点环境变量结束..."
 	
