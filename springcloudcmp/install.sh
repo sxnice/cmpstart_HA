@@ -343,7 +343,7 @@ env_internode(){
 		echo_green "配置各节点环境变量开始..."
 		#从文件里读取ip节点组，一行为一个组
 		cat /dev/null > ./im.config
-		local k=1
+		local k=0
             	for line in $(cat ./haiplist)
             	do
                 SSH_HOST=($line)
