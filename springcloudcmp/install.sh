@@ -39,6 +39,14 @@ declare -a REDIS_HOST=($REDIS_H)
 declare -a MONGO_HOST=($MONGO_H)
 declare -a nodes=()
 
+#所有节点获取
+allnodes_get(){
+	cat haiplist > .allnodes
+	echo $REDIS_H >> .allnodes
+	echo $MONGO_H >> .allnodes
+	sort -u .allnodes > allnodes
+	rm -rf .allnodes
+}
 #检测操作系统
 check_ostype(){
 	local ostype=`ssh $1 head -n 1 /etc/issue | awk '{print $1}'`
@@ -58,8 +66,9 @@ check_ostype(){
 #检测安装软件
 install-interpackage(){
 	echo_green "环境检测开始..."
-	#从文件里读取ip节点组，一行为一个组
-	for line in $(cat ./haiplist)
+	#从文件里读取ip节点组
+	allnodes_get
+	for line in $(cat allnodes)
 	    do
 	SSH_HOST=($line)
 	echo "检测节点组"
@@ -153,6 +162,10 @@ EOF
                                 exit
 			fi
 		fi
+		done
+		
+		for i in $(cat haiplist)
+		do
                 echo "安装jdk1.8到节点"$i
 		ssh "$i" mkdir -p "$JDK_DIR"
 			
@@ -246,16 +259,12 @@ EOF
 ssh-interconnect(){
 	echo_green "建立对等互信开始..."
 	local ssh_init_path=./ssh-init.sh
-        #从文件里读取ip节点组，一行为一个组
-        for line in $(cat ./haiplist)
+        #从文件里读取ip节点组
+	allnodes_get
+        for line in $(cat allnodes)
         do
-		echo "IM节点组"
 		$ssh_init_path $line
 	done
-		echo "redis节点组"
-                $ssh_init_path $REDIS_H
-                echo "mongo节点组"
-                $ssh_init_path $MONGO_H
 	echo_green "建立对等互信完成..."
 }
 
@@ -287,7 +296,7 @@ copy-internode(){
      case $nodeplanr in
 	  [1-4]) #部署
             #从文件里读取ip节点组，一行为一个组
-            for line in $(cat ./haiplist)
+            for i in $(cat haiplist)
             do
 		SSH_HOST=($line)
 		echo "复制文件到节点组"
@@ -344,12 +353,11 @@ env_internode(){
 		#从文件里读取ip节点组，一行为一个组
 		cat /dev/null > ./im.config
 		local k=0
-            	for line in $(cat ./haiplist)
+            	cat ./haiplist | while read line
             	do
-                SSH_HOST=($line)
-		
                 echo "复制文件到节点组"
 		local t=1
+		SSH_HOST=($line)
 		for j in "${SSH_HOST[@]}"
 			do
 			
@@ -469,12 +477,12 @@ EOF
 iptable_internode(){
         echo_green "配置各节点iptables开始..."
         local iptable_path=./iptablescmp.sh
-		local im_iplists=""
+	local im_iplists=""
         #从文件里读取ip节点组，一行为一个组
-            for line in $(cat ./haiplist)
-            do
-			im_iplists=${im_iplists}" "${line}
-			done
+        for line in $(cat ./haiplist)
+	do
+		im_iplists=${im_iplists}" "${line}
+	done
                 echo "复制文件到节点组"
 		$iptable_path $im_iplists
 	    
@@ -545,7 +553,7 @@ start_internode(){
 	#启动主控节点1或集中式启动串行启动！
 	local k=0
 	#从文件里读取ip节点组，一行为一个组
-        for line in $(cat ./haiplist)
+        cat haiplist | while read line
         do
                 SSH_HOST=($line)
                 echo "启动节点组"
