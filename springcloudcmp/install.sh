@@ -8,6 +8,8 @@ nodeplanr=1
 nodenor=1
 eurekaipr=localhost
 dcnamer="DC1"
+eurekaiprepr=localhost
+hanoder="main"
 JDK_DIR="/usr/java"
 MYSQL_DIR="/usr/local/mysql"
 MONGDO_DIR="/usr/local/mongodb"
@@ -272,9 +274,9 @@ EOF
         
 }
 
-#复制文件到各节点
+#复制IM文件到各节点
 copy-internode(){
-     echo_green "复制文件到各节点开始..."
+     echo_green "复制IM文件到各节点开始..."
      
      case $nodeplanr in
 	  [1-4]) #部署
@@ -326,7 +328,7 @@ EOF
 	    echo "nothing to do...."
 	    ;;
 	 esac
-	echo_green "复制文件到各节点完成..."
+	echo_green "复制IM文件到各节点完成..."
 }
 
 #配置各节点环境变量
@@ -335,13 +337,15 @@ env_internode(){
 		echo_green "配置各节点环境变量开始..."
 		#从文件里读取ip节点组，一行为一个组
 		cat /dev/null > ./im.config
+		local k=1
             	for line in $(cat ./haiplist)
             	do
                 SSH_HOST=($line)
                 echo "复制文件到节点组"
-		local k=1
+		local t=1
 		for j in "${SSH_HOST[@]}"
 			do
+			
 			echo "配置节点"$j
 			
 			if [ "$k" -eq 1 ]; then
@@ -365,15 +369,22 @@ env_internode(){
 				read -t 5 -p "请输入采集节点名称，如DC1:" dcnamer
                         	dcnamer=${dcnamer:-"DC1"}
 				fi
-				
+				eurekaiprepr=${HA_HOST[k]}
+				hanoder="main"
+				#写文件，给第二个组使用
+				echo $nodeplanr $nodetyper $nodenor $dcnamer "rep" >> ./im.config
 			else
-				 lines =`sed -n '"$t"p' ./im.config`
+				 
+				 
+				 lines=`sed -n "$t"p ./im.config`
 				 nodes=($lines)
 				 nodeplanr=${nodes[0]}
 				 nodetyper=${nodes[1]}
 				 nodenor=${nodes[2]}
-				 eurekaipr=${HA_HOST[1]}
+				 eurekaipr=$j
 				 dcnamer=${nodes[3]}
+				 eurekaiprepr=${HA_HOST[k]}
+				 hanoder=${nodes[4]}
 				
 			fi
 
@@ -384,9 +395,9 @@ env_internode(){
 			echo "设置nodeno="$nodenor	
 			echo "设置eurekaip="$eurekaipr
 			echo "设置dcname="$dcnamer
-			echo "设置eurekaiprep="${HA_HOST[k]}
+			echo "设置eurekaiprep="$eurekaiprepr
+			echo "设置hanode="$hanoder
 
-			echo "节点："$j
 			
 			ssh $j <<EOF
             		sed -i /nodeplan/d /etc/environment
@@ -395,11 +406,12 @@ env_internode(){
 			sed -i /eurekaip/d /etc/environment
 			sed -i /dcname/d /etc/environment
 			
-			echo "nodeplan=$nodeplanr export nodeplan">>/etc/environment
-			echo "nodetype=$nodetyper export nodetype">>/etc/environment
-			echo "nodeno=$nodenor export nodeno">>/etc/environment 
-			echo "eurekaip=$eurekaipr export eurekaip">>/etc/environment
-			echo "dcname=$dcnamer export dcname">>/etc/environment
+			echo "nodeplan=$nodeplanr">>/etc/environment
+			echo "nodetype=$nodetyper">>/etc/environment
+			echo "nodeno=$nodenor">>/etc/environment 
+			echo "eurekaip=$eurekaipr">>/etc/environment
+			echo "dcname=$dcnamer">>/etc/environment
+			
 
 			su - $cmpuser
 			sed -i /nodeplan/d ~/.bashrc
@@ -410,42 +422,34 @@ env_internode(){
 			
 			echo "umask 077" >> ~/.bashrc
 			echo "CURRENT_DIR=$CURRENT_DIR export CURRENT_DIR" >> ~/.bashrc
-			echo "nodeplan=$nodeplanr export nodeplan">>~/.bashrc
-                        echo "nodetype=$nodetyper export nodetype">>~/.bashrc
-                        echo "nodeno=$nodenor export nodeno">>~/.bashrc 
-                        echo "eurekaip=$eurekaipr export eurekaip">>~/.bashrc
-                        echo "dcname=$dcnamer export dcname">>~/.bashrc
+						echo "nodeplan=$nodeplanr">>~/.bashrc
+                        echo "nodetype=$nodetyper">>~/.bashrc
+                        echo "nodeno=$nodenor">>~/.bashrc 
+                        echo "eurekaip=$eurekaipr">>~/.bashrc
+                        echo "dcname=$dcnamer">>~/.bashrc
 			exit
 EOF
-			#HA配置
-			local hanode="main"
-			local eurekaiprep="${HA_HOST[k]}"
-			if [ "$k" -eq 1 ]; then
-				hanode="main"
-			elif [ "$k" -eq 0 ]; then
-                        	hanode="rep"
-			fi
 			
 			ssh $j <<EOF
-			sed -i /eurekaiprep/d /etc/environmente
+			sed -i /eurekaiprep/d /etc/environment
 			sed -i /hanode/d /etc/environment
-			echo "eurekaiprep=$eurekaiprep export eurekaiprep">>/etc/environment
-			echo "hanode=$hanode export hanode">>/etc/environment
-			source /etc/profile
+			echo "eurekaiprep=$eurekaiprepr">>/etc/environment
+			echo "hanode=$hanoder">>/etc/environment
+			echo "export nodeplan nodetype nodeno eurekaip dcname nodeplan eurekaiprep hanode">>/etc/environment
+			source /etc/environment
 			su - $cmpuser
 			sed -i /eurekaiprep/d ~/.bashrc
 			sed -i /hanode/d ~/.bashrc
-			echo "eurekaiprep=$eurekaiprep export eurekaiprep">>~/.bashrc
-			echo "hanode=$hanode export hanode">>~/.bashrc
+			echo "eurekaiprep=$eurekaiprepr">>~/.bashrc
+			echo "hanode=$hanoder">>~/.bashrc
+			echo "export nodeplan nodetype nodeno eurekaip dcname nodeplan eurekaiprep hanode">>~/.bashrc
 			source ~/.bashrc
 			exit
 EOF
-			#写文件，给第二个组使用
-			echo $nodeplanr $nodetyper $nodenor $dcnamer >>./im.config
-			
-		
 		echo "complete..." 
+		let t=t+1
 		done
+		echo "节点组配置完成..."
 		let k=k-1
 	    done
 		echo_green "配置各节点环境变量结束..."
@@ -456,12 +460,15 @@ EOF
 iptable_internode(){
         echo_green "配置各节点iptables开始..."
         local iptable_path=./iptablescmp.sh
+		local im_iplists=""
         #从文件里读取ip节点组，一行为一个组
             for line in $(cat ./haiplist)
             do
+			im_iplists=${im_iplists}" "${line}
+			done
                 echo "复制文件到节点组"
-		$iptable_path $line
-	    done
+		$iptable_path $im_iplists
+	    
 	echo_green "配置各节点iptables结束..."
 }
 
@@ -478,9 +485,9 @@ keeplived_settings(){
 	do
 	echo "配置节点"$i
 	#需在满足条件下才能安装
-	local nplan=`ssh $cmpuser@$i echo \$nodeplan`
-        local ntype=`ssh $cmpuser@$i echo \$nodetype`
-        local nno=`ssh $cmpuser@$i echo \$nodeno`
+		local nplan=`ssh $i echo \\$nodeplan`
+        local ntype=`ssh $i echo \\$nodetype`
+        local nno=`ssh $i echo \\$nodeno`
 	if [ "$nplan" = "1" ] || [ "$ntype" = "1" -a "$nplan" = "2" -a "$nno" = "1" ] || [ "$ntype" = "1" -a "$nplan" = "3" -a "$nno" = "1" ] || [ "$ntype" = "1" -a "$nplan" = "4" -a "$nno" = "1" ] || [ "$ntype" = "3" -a "$nplan" = "2" -a "$nno" = "1" ] || [ "$ntype" = "3" -a "$nplan" = "3" -a "$nno" = "1" ] || [ "$ntype" = "3" -a "$nplan" = "4" -a "$nno" = "1" ] ; then
 	#centos7对于keepalived在/etc/init.d/没有脚本，需单独复制
 	local ostype=`check_ostype $i`
@@ -835,7 +842,7 @@ mongo_install(){
 		mkdir -p data/logs
 		mkdir -p data/db
 		echo "start mongodb"
-		nohup ./bin/mongod --dbpath=$MONGDO_DIR/data/db --logpath=$MONGDO_DIR/data/logs/mongodb.log --replSet dbReplSet  &>/dev/null &
+		nohup ./bin/mongod --port=31001 --dbpath=$MONGDO_DIR/data/db --logpath=$MONGDO_DIR/data/logs/mongodb.log --replSet dbReplSet  &>/dev/null &
 		echo "配置环境变量"
 		sed -i /mongo/d ~/.bashrc
 		echo export PATH=$MONGDO_DIR/bin:'\$PATH' >> ~/.bashrc
@@ -844,6 +851,7 @@ mongo_install(){
 EOF
 	echo "complete..."
 	done
+	sleep 20
 	echo "配置monogo"
 	for i in "${MONGO_HOST[@]}"
 	do
@@ -857,6 +865,7 @@ EOF
 	echo "设置需验证登录"
 	ssh $i <<EOF
 		pkill mongod
+		sleep 10
 		su - mongo
 		cd $MONGDO_DIR
 		echo "restart mongodb"
