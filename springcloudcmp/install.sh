@@ -347,6 +347,7 @@ env_internode(){
             	for line in $(cat ./haiplist)
             	do
                 SSH_HOST=($line)
+		
                 echo "复制文件到节点组"
 		local t=1
 		for j in "${SSH_HOST[@]}"
