@@ -12,17 +12,21 @@ ssh  $i <<EOF
 		iptables -P INPUT ACCEPT
                 iptables-save >/etc/iptables
                 sed -i /"-A INPUT -p tcp -m tcp --dport 22 -j ACCEPT"/d /etc/iptables
-		sed -i /3306/d /etc/iptables
 		sed -i /icmp/d /etc/iptables
-		sed -i /vrrp/d /etc/iptables
-		sed -i /"224.0.0.0"/d /etc/iptables
+		sed -i /imdb/d /etc/iptables
                 iptables-restore </etc/iptables
+		iptables --new imdb
 		iptables -A INPUT -p tcp --dport 22 -j ACCEPT
-		iptables -A INPUT -p tcp --dport 3306 -j ACCEPT
-		iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
-		iptables -A INPUT -p icmp --icmp-type any -j ACCEPT
-		iptables -A INPUT -i eth0 -p 112 -j ACCEPT
-		iptables -A INPUT -i eth0 -d 224.0.0.0/8 -j ACCEPT
+		iptables -A imdb -p tcp --dport 3306 -j ACCEPT
+		iptables -A imdb -p tcp --dport 7000 -j ACCEPT
+                iptables -A imdb -p tcp --dport 7001 -j ACCEPT
+                iptables -A imdb -p tcp --dport 7002 -j ACCEPT
+                iptables -A imdb -p tcp --dport 31001 -j ACCEPT
+		iptables -A imdb -m state --state ESTABLISHED,RELATED -j ACCEPT
+		iptables -A imdb -p icmp --icmp-type any -j ACCEPT
+		iptables -A imdb -i eth0 -p 112 -j ACCEPT
+		iptables -A imdb -i eth0 -d 224.0.0.0/8 -j ACCEPT
+		iptables -A INPUT -j imdb
 		iptables -P INPUT DROP
 		exit
 EOF

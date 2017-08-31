@@ -249,9 +249,13 @@ ssh-interconnect(){
         #从文件里读取ip节点组，一行为一个组
         for line in $(cat ./haiplist)
         do
-		echo "节点组"
+		echo "IM节点组"
 		$ssh_init_path $line
 	done
+		echo "redis节点组"
+                $ssh_init_path $REDIS_H
+                echo "mongo节点组"
+                $ssh_init_path $MONGO_H
 	echo_green "建立对等互信完成..."
 }
 
