@@ -30,6 +30,8 @@ MONGO_PASSWORD="Pbu4@123"
 #主主控节点，备主控节点 空格格开
 HA_H="10.143.132.187 10.143.132.190"
 #haiplist文件存放HA节点ip组
+#IM浮动IP
+VIP="10.143.132.168"
 #-----------------------------------------------
 declare -a SSH_HOST=()
 declare -a HA_HOST=($HA_H)
