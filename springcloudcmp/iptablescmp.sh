@@ -53,10 +53,6 @@ ssh $i <<EOF
 		iptables -A cmp -s $k -p tcp --dport 28085 -j ACCEPT
 		iptables -A cmp -s $k -p tcp --dport 28086 -j ACCEPT
 		iptables -A cmp -s $k -p tcp --dport 61626 -j ACCEPT
-		iptables -A cmp -s $k -p tcp --dport 7000 -j ACCEPT
-		iptables -A cmp -s $k -p tcp --dport 7001 -j ACCEPT
-                iptables -A cmp -s $k -p tcp --dport 7002 -j ACCEPT
-		iptables -A cmp -s $k -p tcp --dport 31001 -j ACCEPT
 		exit
 
 EOF
