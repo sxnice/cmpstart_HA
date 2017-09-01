@@ -373,13 +373,13 @@ env_internode(){
                         eurekaiprepr=${nodes[5]}
 			
 			
-			echo "设置nodeplan="$nodeplanr
-			echo "设置nodetype="$nodetyper
-			echo "设置nodeno="$nodenor	
-			echo "设置eurekaip="$eurekaipr
-			echo "设置dcname="$dcnamer
-			echo "设置eurekaiprep="$eurekaiprepr
-			echo "设置hanode="$hanoder
+			echo_yellow "设置nodeplan="$nodeplanr
+			echo_yellow "设置nodetype="$nodetyper
+			echo_yellow "设置nodeno="$nodenor	
+			echo_yellow "设置eurekaip="$eurekaipr
+			echo_yellow "设置dcname="$dcnamer
+			echo_yellow "设置eurekaiprep="$eurekaiprepr
+			echo_yellow "设置hanode="$hanoder
 
 			
 			ssh $j <<EOF
