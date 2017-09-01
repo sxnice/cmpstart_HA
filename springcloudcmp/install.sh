@@ -482,7 +482,7 @@ iptable_internode(){
 	do
 		im_iplists=${im_iplists}" "${line}
 	done
-		$iptable_path $im_iplists
+	$iptable_path $im_iplists
 	    
 	echo_green "配置iptables结束..."
 }
