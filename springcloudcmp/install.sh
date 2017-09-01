@@ -471,9 +471,9 @@ EOF
 	
 }
 
-#配置iptables
-iptable_internode(){
-        echo_green "配置iptables开始..."
+#配置im的iptables
+iptable_imnode(){
+        echo_green "配置im--iptables开始..."
         local iptable_path=./iptablescmp.sh
 	local im_iplists=""
         #从文件里读取ip节点组，一行为一个组
@@ -482,8 +482,15 @@ iptable_internode(){
 		im_iplists=${im_iplists}" "${line}
 	done
 	$iptable_path $im_iplists
-	    
-	echo_green "配置iptables结束..."
+	echo_green "配置im--iptables结束..."
+}
+
+#配置redis,mongo的iptables
+iptable_dbnode(){
+        echo_green "配置db--iptables开始..."
+        ./iptablesredis.sh $REDIS_H
+	./iptablesmongo.sh $MONGO_H
+        echo_green "配置db--iptables结束..."
 }
 
 #keeplived安装配置
@@ -765,7 +772,8 @@ do
 		copy-internode
 		env_internode
 		keeplived_settings
-		iptable_internode
+		iptable_imnode
+		iptable_dbnode
 		start_internode
         break
         ;;
@@ -779,7 +787,8 @@ do
 		copy-internode
 		env_internode
 		keeplived_settings
-		iptable_internode
+		iptable_imnode
+                iptable_dbnode
 		start_internode
         break
         ;;
@@ -793,7 +802,8 @@ do
 		copy-internode
 		env_internode
 		keeplived_settings
-		iptable_internode
+		iptable_imnode
+                iptable_dbnode
 		start_internode
         break
         ;;
@@ -807,7 +817,8 @@ do
 		copy-internode
 		env_internode
 		keeplived_settings
-		iptable_internode
+		iptable_imnode
+                iptable_dbnode
 		start_internode
         break
         ;;
