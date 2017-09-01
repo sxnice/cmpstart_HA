@@ -100,9 +100,8 @@ stop_internode(){
 	#从文件里读取ip节点组，一行为一个组
         cat haiplist | while read line
 	do
-                SSH_HOST=($line)
                 echo "关闭节点组"
-		for i in "${SSH_HOST[@]}"
+		for i in $line
 		do
 		echo "关闭节点"$i
 		local user=`ssh $i cat /etc/passwd | sed -n /$cmpuser/p |wc -l`

@@ -30,12 +30,7 @@ start_internode(){
 	echo_green "启动CMP开始..."
 	#启动主控节点1或集中式启动串行启动！
 	local k=0
-	#从文件里读取ip节点组，一行为一个组
-        cat haiplist | while read line
-        do
-                SSH_HOST=($line)
-                echo "启动节点组"
-		for i in "${SSH_HOST[@]}"
+		for i in $(cat haiplist)
 		do
 			echo "启动节点"$i
 			ssh $i <<EOF
@@ -90,19 +85,13 @@ EOF
 		let k=k+1
 		echo "节点检测成功"
 		done
-	done
 	echo_green "启动CMP完成..."
 }
 
 #关闭cmp
 stop_internode(){
 	echo_green "关闭CMP开始..."
-	#从文件里读取ip节点组，一行为一个组
-        cat haiplist | while read line
-	do
-                SSH_HOST=($line)
-                echo "关闭节点组"
-		for i in "${SSH_HOST[@]}"
+		for i in $(cat haiplist)
 		do
 		echo "关闭节点"$i
 		local user=`ssh $i cat /etc/passwd | sed -n /$cmpuser/p |wc -l`
@@ -122,7 +111,6 @@ EOF
 			exit
 		fi
 		done
-	done
 	echo_green "所有节点CMP关闭完成..."
 }
 
