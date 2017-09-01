@@ -69,7 +69,7 @@ install-interpackage(){
 	#从文件里读取ip节点组
 	allnodes_get
 	for line in $(cat allnodes)
-	    do
+	do
 	SSH_HOST=($line)
 	echo "检测节点组"
 	for i in "${SSH_HOST[@]}"
@@ -164,42 +164,43 @@ EOF
 		fi
 		done
 		
-		for i in $(cat haiplist)
-		do
+	echo "complete...."
+	done
+	
+	for i in $(cat haiplist)
+	do
                 echo "安装jdk1.8到节点"$i
-		ssh "$i" mkdir -p "$JDK_DIR"
-			
-		scp -r ../packages/jdk/* "$i":"$JDK_DIR"
-		scp ../packages/jce/* "$i":"$JDK_DIR"/jre/lib/security/
-		ssh $i  <<EOF
-		    chmod 755 "$JDK_DIR"/bin/*
-		    sed -i /JAVA_HOME/d /etc/profile
-		    echo JAVA_HOME="$JDK_DIR" >> /etc/profile
-		    echo PATH='\$JAVA_HOME'/bin:'\$PATH' >> /etc/profile
-		    echo CLASSPATH='\$JAVA_HOME'/jre/lib/ext:'\$JAVA_HOME'/lib/tools.jar >> /etc/profile
-  	            echo export PATH JAVA_HOME CLASSPATH >> /etc/profile
-	            source /etc/profile
-		    su - $cmpuser
+                ssh "$i" mkdir -p "$JDK_DIR"
+
+                scp -r ../packages/jdk/* "$i":"$JDK_DIR"
+                scp ../packages/jce/* "$i":"$JDK_DIR"/jre/lib/security/
+                ssh $i  <<EOF
+                    chmod 755 "$JDK_DIR"/bin/*
+                    sed -i /JAVA_HOME/d /etc/profile
+                    echo JAVA_HOME="$JDK_DIR" >> /etc/profile
+                    echo PATH='\$JAVA_HOME'/bin:'\$PATH' >> /etc/profile
+                    echo CLASSPATH='\$JAVA_HOME'/jre/lib/ext:'\$JAVA_HOME'/lib/tools.jar >> /etc/profile
+                    echo export PATH JAVA_HOME CLASSPATH >> /etc/profile
+                    source /etc/profile
+                    su - $cmpuser
                     sed -i /JAVA_HOME/d ~/.bashrc
                     echo JAVA_HOME="$JDK_DIR" >> ~/.bashrc
                     echo PATH='\$JAVA_HOME'/bin:'\$PATH' >> ~/.bashrc
                     echo CLASSPATH='\$JAVA_HOME'/jre/lib/ext:'\$JAVA_HOME'/lib/tools.jar >> ~/.bashrc
                     echo export PATH JAVA_HOME CLASSPATH >> ~/.bashrc
-		    exit
-		
+                    exit
+                
 EOF
-		echo "系统配置节点"$i
-		ssh "$i" <<EOF
-		    sed -i /$cmpuser/d /etc/security/limits.conf
-		    echo $cmpuser soft nproc unlimited >>/etc/security/limits.conf
-		    echo $cmpuser hard nproc unlimited >>/etc/security/limits.conf
-		    sed -i /limits/d /etc/security/limits.conf
-	            echo session required pam_limits.so >>/etc/pam.d/login
-		    exit
+                echo "系统配置节点"$i
+                ssh "$i" <<EOF
+                    sed -i /$cmpuser/d /etc/security/limits.conf
+                    echo $cmpuser soft nproc unlimited >>/etc/security/limits.conf
+                    echo $cmpuser hard nproc unlimited >>/etc/security/limits.conf
+                    sed -i /limits/d /etc/security/limits.conf
+                    echo session required pam_limits.so >>/etc/pam.d/login
+                    exit
 EOF
-		echo "complete..." 
-	done
-	echo "complete...."
+                echo "complete..." 
 	done
 	echo_green "检测安装环境完成..."
 }
