@@ -475,7 +475,7 @@ keeplived_settings(){
 	local nplan=`ssh $i echo \\$nodeplan`
         local ntype=`ssh $i echo \\$nodetype`
         local nno=`ssh $i echo \\$nodeno`
-	if [ "$nplan" = "1" ] || [ "$ntype" = "1" -a "$nplan" = "2" -a "$nno" = "1" ] || [ "$ntype" = "1" -a "$nplan" = "3" -a "$nno" = "1" ] || [ "$ntype" = "1" -a "$nplan" = "4" -a "$nno" = "1" ] || [ "$ntype" = "3" -a "$nplan" = "2" -a "$nno" = "1" ] || [ "$ntype" = "3" -a "$nplan" = "3" -a "$nno" = "1" ] || [ "$ntype" = "3" -a "$nplan" = "4" -a "$nno" = "1" ] ; then
+	if [ "$nplan" = "1" ] || [ "$ntype" = "1" -a "$nplan" = "2" -a "$nno" = "2" ] || [ "$ntype" = "1" -a "$nplan" = "3" -a "$nno" = "2" ] || [ "$ntype" = "1" -a "$nplan" = "4" -a "$nno" = "3" ] || [ "$ntype" = "3" -a "$nplan" = "2" -a "$nno" = "2" ] || [ "$ntype" = "3" -a "$nplan" = "3" -a "$nno" = "2" ] || [ "$ntype" = "3" -a "$nplan" = "4" -a "$nno" = "3" ]; then
 	#centos7对于keepalived在/etc/init.d/没有脚本，需单独复制
 	local ostype=`check_ostype $i`
 	local keepalived=`ssh  "$i" rpm -qa |grep keepalived |wc -l`

@@ -19,8 +19,8 @@ echo "nodeplan=""$nodeplan"
 echo "nodetype=""$nodetype"
 echo "nodeno=""$nodeno"
 
-if [ "$nodeplan" = "1" ] || [ "$nodetype" = "1" -a "$nodeplan" = "2" -a "$nodeno" = "1" ] || [ "$nodetype" = "1" -a "$nodeplan" = "3" -a "$nodeno" = "1" ] || [ "$nodetype" = "1" -a "$nodeplan" = "4" -a "$nodeno" = "1" ] || [ "$nodetype" = "3" -a "$nodeplan" = "2" -a "$nodeno" = "1" ] || [ "$nodetype" = "3" -a "$nodeplan" = "3" -a "$nodeno" = "1" ] || [ "$nodetype" = "3" -a "$nodeplan" = "4" -a "$nodeno" = "1" ] ; then
-#启动zuulmanager
+if [ "$nodeplan" = "1" ] || [ "$nodetype" = "1" -a "$nodeplan" = "2" -a "$nodeno" = "2" ] || [ "$nodetype" = "1" -a "$nodeplan" = "3" -a "$nodeno" = "2" ] || [ "$nodetype" = "1" -a "$nodeplan" = "4" -a "$nodeno" = "3" ] || [ "$nodetype" = "3" -a "$nodeplan" = "2" -a "$nodeno" = "2" ] || [ "$nodetype" = "3" -a "$nodeplan" = "3" -a "$nodeno" = "2" ] || [ "$nodetype" = "3" -a "$nodeplan" = "4" -a "$nodeno" = "3" ]; then
+#鍚姩zuulmanager
 echo "start zuulmanager"	
 pIDzuulmanager=`lsof -i :$portzuulmanager|grep  "LISTEN" | awk '{print $2}'`
 echo $pIDzuulmanager 
@@ -39,7 +39,7 @@ echo "zuulmanager success!"
 
 
 sleep $sleeptime
-# 如果上面无法启动成功，那么就停止keepalived
+# 濡傛灉涓婇潰鏃犳硶鍚姩鎴愬姛锛岄偅涔堝氨鍋滄keepalived
 if [ "$pIDzuulmanager" = "" ] ; then
 	keepalivedcheck=$(ps -C keepalived --no-header | wc -l)
 	if [ "${keepalivedcheck}" != "0" ]; then
@@ -50,3 +50,4 @@ if [ "$pIDzuulmanager" = "" ] ; then
 fi
 
 fi
+
