@@ -31,7 +31,6 @@ MONGO_PASSWORD="Pbu4@123"
 VIP="10.143.132.168"
 #-----------------------------------------------
 declare -a SSH_HOST=()
-declare -a HA_HOST=($HA_H)
 declare -a REDIS_HOST=($REDIS_H)
 declare -a MONGO_HOST=($MONGO_H)
 declare -a nodes=()
@@ -371,7 +370,7 @@ env_internode(){
                         nodenor=${nodes[2]}
                         dcnamer=${nodes[3]}
 			eurekaipr=${nodes[4]}
-                        eurekaiprepr=${HA_HOST[5]}
+                        eurekaiprepr=${nodes[5]}
 			
 			
 			echo "设置nodeplan="$nodeplanr
