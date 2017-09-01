@@ -246,7 +246,7 @@ mysqlha_createdb(){
 iptables-mysql(){
   	echo_green "配置iptables开始..."
         local iptable_path=./iptablesmysql.sh
-        $iptable_path $MYSQL_H
+        $iptable_path $MYSQL_HA
 	echo_green "配置iptables完成..."
 }
 

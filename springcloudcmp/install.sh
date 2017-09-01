@@ -347,9 +347,8 @@ env_internode(){
         
 		echo_green "配置IM参数开始..."
 		#从文件里读取ip节点组，一行为一个组
-		cat /dev/null > ./im.config
 		local k=0
-            	cat ./haiplist | while read line
+            	cat haiplist | while read line
             	do
                 echo "节点组配置开始"
 		local t=1
@@ -470,7 +469,7 @@ keeplived_settings(){
 	echo_green "配置keeplived开始..."
 	k=100
 
-	for $i in $(cat ./haiplist)
+	for i in $(cat ./haiplist)
         do
 	echo "配置节点"$i
 	#需在满足条件下才能安装
