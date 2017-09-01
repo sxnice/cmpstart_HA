@@ -130,8 +130,6 @@ nohup "$CURRENT_DIR"/background/springbootstartcmdb.sh &>/dev/null &
 sleep $sleeptime
 fi
 
-
-
 #启动vspheremanage
 echo "start vspheremanage"
 pIDvspheremanage=`lsof -i :$portvspheremanage|grep  "LISTEN" | awk '{print $2}'`
