@@ -645,10 +645,9 @@ EOF
 uninstall_internode(){
 	echo_green "清空安装开始..."
 	#从文件里读取ip节点组，一行为一个组
-        for line in $(cat ./haiplist)
+        cat haiplist | while read line
         do
                 SSH_HOST=($line)
-                echo "删除节点组"
 		for i in "${SSH_HOST[@]}"
 		do
 		echo "删除节点"$i
