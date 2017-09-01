@@ -498,7 +498,7 @@ keeplived_settings(){
 	echo_green "配置keeplived开始..."
 	k=100
 
-	for line in $(cat ./haiplist)
+	for $i in $(cat ./haiplist)
         do
 	echo "配置节点"$i
 	#需在满足条件下才能安装
