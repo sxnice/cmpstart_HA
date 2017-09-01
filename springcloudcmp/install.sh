@@ -26,8 +26,6 @@ REDIS_H="10.143.132.187 10.143.132.190 10.143.132.196"
 #MONGOIP 主IP,从IP，仲裁IP 空格格开(仅支持配置三个节点IP)
 MONGO_H="10.143.132.187 10.143.132.190 10.143.132.196"
 MONGO_PASSWORD="Pbu4@123"
-#主主控节点，备主控节点 空格格开
-HA_H="10.143.132.187 10.143.132.190"
 #haiplist文件存放HA节点ip组
 #IM浮动IP
 VIP="10.143.132.168"
@@ -362,45 +360,19 @@ env_internode(){
 			echo "配置节点"$j
 			
 			if [ "$k" -eq 0 ]; then
-				if [ $nodeplanr -ne 1 ]; then
-				echo "节点类型，请输入编号："  
-				echo "1-----控制节点."  
-				echo "2-----采集节点."    
-				echo "3-----控制以及采集节点."    
-				read nodetyper 
-			
-				if [ $nodetyper -eq 1 ]; then
-				echo "当前控制节点编号请按照1,2,3等顺序编写："  
-				read nodenor
-				fi
-			
-				echo "1号控制节点IP："  
-				read eurekaipr 
-				fi
-			
-				if [ $nodetyper -eq 2 ] || [ $nodetyper -eq 3 ]; then
-				read -t 5 -p "请输入采集节点名称，如DC1:" dcnamer
-                        	dcnamer=${dcnamer:-"DC1"}
-				fi
-				eurekaiprepr=${HA_HOST[1]}
 				hanoder="main"
-				#写文件，给第二个组使用
-				echo $nodeplanr $nodetyper $nodenor $dcnamer "rep" >> ./im.config
-			else
-				 
-				 
-				 lines=`sed -n "$t"p ./im.config`
-				 nodes=($lines)
-				 nodeplanr=${nodes[0]}
-				 nodetyper=${nodes[1]}
-				 nodenor=${nodes[2]}
-				 eurekaipr=${HA_HOST[0]}
-				 dcnamer=${nodes[3]}
-				 eurekaiprepr=${HA_HOST[1]}
-				 hanoder=${nodes[4]}
+			else 
+				hanoder="rep"
 				
 			fi
-
+			lines=`sed -n "$t"p ./im.config`
+                        nodes=($lines)
+                        nodeplanr=${nodes[0]}
+                        nodetyper=${nodes[1]}
+                        nodenor=${nodes[2]}
+                        dcnamer=${nodes[3]}
+			eurekaipr=${nodes[4]}
+                        eurekaiprepr=${HA_HOST[5]}
 			
 			
 			echo "设置nodeplan="$nodeplanr
