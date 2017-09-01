@@ -11,7 +11,7 @@ CURRENT_DIR="/springcloudcmp"
 #用户名
 cmpuser="cmpimuser"
 #-----------------------------------------------
-declare -a SSH_HOST=($SSH_H)
+declare -a SSH_HOST=()
 
 #建立对等互信
 ssh-interconnect(){
