@@ -44,7 +44,7 @@ ssh-mysqlconnect(){
 }
 
 mysql_install(){
-	echo_green "安装mysql5.7.19开始"
+	echo_green "安装mysql5.7开始"
 	local k=1
 	for i in "${MSYQLHA_HOST[@]}"
 	do
@@ -160,7 +160,7 @@ EOF
 			echo_green "复制文件"
 			ssh "$i" mkdir -p "$MYSQL_DIR"
 			scp ./*.sh "$i":/root/
-			scp -r ../packages/mysql-5.7.19/* "$i":"$MYSQL_DIR"
+			scp -r ../packages/mysql/* "$i":"$MYSQL_DIR"
 			if [ "$k" -eq 1 ]; then
 				ssh "$i" cp "$MYSQL_DIR"/support-files/my-master.cnf /etc/my.cnf
 			else

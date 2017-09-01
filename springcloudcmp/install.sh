@@ -295,7 +295,7 @@ copy-internode(){
      case $nodeplanr in
 	  [1-4]) #部署
             #从文件里读取ip节点组，一行为一个组
-            for i in $(cat haiplist)
+            for line in $(cat haiplist)
             do
 		SSH_HOST=($line)
 		for i in "${SSH_HOST[@]}"
