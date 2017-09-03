@@ -21,18 +21,9 @@ CURRENT_DIR="/springcloudcmp"
 #用户名，密码
 cmpuser="cmpimuser"
 cmppass="Pbu4@123"
-#MYSQLIP
-MYSQL_H="10.143.132.187"
-#MYSQL相关密码
-MYSQL_ROOT_PASSWORD="Pbu4@123"
-MYSQL_EVUSER_PASSWORD="Pbu4@123"
-MYSQL_IM_PASSWORD="Pbu4@123"
-#主主控节点，备主控节点 空格格开
-HA_H="10.143.132.187 10.143.132.190"
 #haiplist文件放HA节点ip组
 #-----------------------------------------------
 declare -a SSH_HOST=()
-declare -a HA_HOST=($HA_H)
 
 #检测操作系统
 check_ostype(){
@@ -181,7 +172,6 @@ copy-internode(){
 		chmod 740 "$CURRENT_DIR"/background/*.sh
 		chmod 740 "$CURRENT_DIR"/im/*.sh
 		chmod 640 "$CURRENT_DIR"/im/*.war
-		chmod 600 "$CURRENT_DIR"/my.cnf
                 chmod 600 "$CURRENT_DIR"/colorecho
 		chmod 600 "$CURRENT_DIR"/config/*.yml
 		su $cmpuser
