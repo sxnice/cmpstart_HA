@@ -388,13 +388,18 @@ env_internode(){
 			sed -i /nodeno/d /etc/environment
 			sed -i /eurekaip/d /etc/environment
 			sed -i /dcname/d /etc/environment
+			sed -i /eurekaiprep/d /etc/environment
+                        sed -i /hanode/d /etc/environment
 			
 			echo "nodeplan=$nodeplanr">>/etc/environment
 			echo "nodetype=$nodetyper">>/etc/environment
 			echo "nodeno=$nodenor">>/etc/environment 
 			echo "eurekaip=$eurekaipr">>/etc/environment
 			echo "dcname=$dcnamer">>/etc/environment
-			
+			echo "eurekaiprep=$eurekaiprepr">>/etc/environment
+                        echo "hanode=$hanoder">>/etc/environment
+                        echo "export nodeplan nodetype nodeno eurekaip dcname nodeplan eurekaiprep hanode">>/etc/environment
+			source /etc/environment
 
 			su - $cmpuser
 			sed -i /nodeplan/d ~/.bashrc
@@ -403,34 +408,23 @@ env_internode(){
                         sed -i /eurekaip/d ~/.bashrc
                         sed -i /dcname/d ~/.bashrc
 			sed -i /umask/d ~/.bashrc
+			sed -i /eurekaiprep/d ~/.bashrc
+                        sed -i /hanode/d ~/.bashrc
 			sed -i /CURRENT_DIR/d ~/.bashrc
-			
 			echo "umask 077" >> ~/.bashrc
+
 			echo "CURRENT_DIR=$CURRENT_DIR export CURRENT_DIR" >> ~/.bashrc
 			echo "nodeplan=$nodeplanr">>~/.bashrc
                         echo "nodetype=$nodetyper">>~/.bashrc
                         echo "nodeno=$nodenor">>~/.bashrc 
                         echo "eurekaip=$eurekaipr">>~/.bashrc
                         echo "dcname=$dcnamer">>~/.bashrc
-			exit
-EOF
-			
-			ssh $j <<EOF
-			sed -i /eurekaiprep/d /etc/environment
-			sed -i /hanode/d /etc/environment
-			echo "eurekaiprep=$eurekaiprepr">>/etc/environment
-			echo "hanode=$hanoder">>/etc/environment
-			echo "export nodeplan nodetype nodeno eurekaip dcname nodeplan eurekaiprep hanode">>/etc/environment
-			source /etc/environment
-			su - $cmpuser
-			sed -i /eurekaiprep/d ~/.bashrc
-			sed -i /hanode/d ~/.bashrc
 			echo "eurekaiprep=$eurekaiprepr">>~/.bashrc
-			echo "hanode=$hanoder">>~/.bashrc
-			echo "export nodeplan nodetype nodeno eurekaip dcname nodeplan eurekaiprep hanode">>~/.bashrc
-			source ~/.bashrc
+                        echo "hanode=$hanoder">>~/.bashrc
+                        echo "export nodeplan nodetype nodeno eurekaip dcname nodeplan eurekaiprep hanode">>~/.bashrc
+                        source ~/.bashrc
 			exit
-EOF
+EOF	
 		echo "complete..." 
 		let t=t+1
 		done
@@ -516,6 +510,7 @@ EOF
 	done
 	echo_green "配置keeplived配置完成..."
 }
+
 #启动cmp
 start_internode(){
 	echo_green "启动CMP开始..."
