@@ -584,13 +584,8 @@ EOF
 #关闭cmp
 stop_internode(){
 	echo_green "关闭CMP开始..."
-	#从文件里读取ip节点组，一行为一个组
-        cat haiplist | while read line
+	for i in "$(cat haiplist)"
 	do
-                SSH_HOST=($line)
-                echo "关闭节点组"
-		for i in "${SSH_HOST[@]}"
-		do
 		echo "关闭节点"$i
 		local user=`ssh $i cat /etc/passwd | sed -n /$cmpuser/p |wc -l`
 		if [ "$user" -eq 1 ]; then
@@ -608,7 +603,6 @@ EOF
 			echo_red "尚未创建$cmpuser用户,请手动关闭服务后，再执行！"
 			exit
 		fi
-		done
 	done
 	echo_green "所有节点CMP关闭完成..."
 }
@@ -616,12 +610,8 @@ EOF
 #清空安装
 uninstall_internode(){
 	echo_green "清空安装开始..."
-	#从文件里读取ip节点组，一行为一个组
-        cat haiplist | while read line
-        do
-                SSH_HOST=($line)
-		for i in "${SSH_HOST[@]}"
-		do
+	for i in "$(cat haiplist)"
+	do
 		echo "删除节点"$i
 		ssh $i <<EOF
 		rm -rf "$CURRENT_DIR"
@@ -638,7 +628,6 @@ uninstall_internode(){
 		exit
 EOF
 		echo "complete..."
-		done
 	done
 	echo_green "清空安装完成..."
 }
