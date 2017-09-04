@@ -424,7 +424,7 @@ env_internode(){
                         echo "export nodeplan nodetype nodeno eurekaip dcname nodeplan eurekaiprep hanode">>~/.bashrc
                         source ~/.bashrc
 			exit
-EOF	
+EOF
 		echo "complete..." 
 		let t=t+1
 		done
