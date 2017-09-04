@@ -584,7 +584,7 @@ EOF
 #关闭cmp
 stop_internode(){
 	echo_green "关闭CMP开始..."
-	for i in "$(cat haiplist)"
+	for i in $(cat haiplist)
 	do
 		echo "关闭节点"$i
 		local user=`ssh $i cat /etc/passwd | sed -n /$cmpuser/p |wc -l`
@@ -600,8 +600,8 @@ EOF
 				echo "CMP已关闭"
 			fi
 		else
-			echo_red "尚未创建$cmpuser用户,请手动关闭服务后，再执行！"
-			exit
+			echo_yellow "尚未创建$cmpuser用户,请手动关闭服务后，再执行！"
+		#	exit
 		fi
 	done
 	echo_green "所有节点CMP关闭完成..."
@@ -610,7 +610,7 @@ EOF
 #清空安装
 uninstall_internode(){
 	echo_green "清空安装开始..."
-	for i in "$(cat haiplist)"
+	for i in $(cat haiplist)
 	do
 		echo "删除节点"$i
 		ssh $i <<EOF
@@ -650,6 +650,9 @@ mongo_install(){
 		chown -R mongo.mongo $MONGDO_DIR
 		chmod 700 $MONGDO_DIR/bin/*
 		chmod 600 $MONGDO_DIR/mongo.key
+		sed -i /mongo/d ~/.bashrc
+                echo export PATH=$MONGDO_DIR/bin:'\$PATH' >> ~/.bashrc
+                source ~/.bashrc
 		su - mongo
 		cd $MONGDO_DIR
 		umask 077
