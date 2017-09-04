@@ -14,5 +14,5 @@ mongo $1:31001 <<-EOSQL
           roles: [ { role: "root", db: "admin" } ]
         }
      );
-	 db.auth('root','$4');
+	 db.auth('evuser','$4');
 EOSQL
