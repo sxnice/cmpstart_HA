@@ -9,10 +9,10 @@ mongo $1:31001 <<-EOSQL
 	use collectDataDB;
 	db.createUser(
         {
-          user: "evuser",
-          pwd: "$4",
+          user: "$4",
+          pwd: "$5",
           roles: [ { role: "root", db: "admin" } ]
         }
      );
-	 db.auth('evuser','$4');
+	 db.auth('$4','$5');
 EOSQL

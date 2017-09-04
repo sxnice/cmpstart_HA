@@ -25,6 +25,7 @@ cmppass="Pbu4@123"
 REDIS_H="10.143.132.187 10.143.132.190 10.143.132.196"
 #MONGOIP 主IP,从IP，仲裁IP 空格格开(仅支持配置三个节点IP)
 MONGO_H="10.143.132.187 10.143.132.190 10.143.132.196"
+MONGO_USER="evuser"
 MONGO_PASSWORD="Pbu4@123"
 #haiplist文件存放HA节点ip组
 #IM浮动IP
@@ -600,7 +601,7 @@ EOF
 				echo "CMP已关闭"
 			fi
 		else
-			echo_yellow "尚未创建$cmpuser用户,请手动关闭服务后，再执行！"
+			echo_yellow "尚未创建$cmpuser用户,请手动关闭服务!"
 		#	exit
 		fi
 	done
@@ -675,7 +676,7 @@ EOF
 		if [ "$k" -eq 1 ]; then
 		scp ./init_mongo.sh "$i":/root/
 		#设置mongdodb密码	
-		declare -a MONGOS=($MONGO_H $MONGO_PASSWORD) 
+		declare -a MONGOS=($MONGO_H $MONGO_USER $MONGO_PASSWORD) 
 		ssh $i /root/init_mongo.sh "${MONGOS[@]}"
 	fi
 	let k=k+1
