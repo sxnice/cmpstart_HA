@@ -40,7 +40,8 @@ allnodes_get(){
 	cat haiplist > .allnodes
 	echo $REDIS_H >> .allnodes
 	echo $MONGO_H >> .allnodes
-	sort -u .allnodes > allnodes
+	ip_regex="[[:digit:]]{1,3}\.[[:digit:]]{1,3}\.[[:digit:]]{1,3}\.[[:digit:]]{1,3}"
+	cat .allnodes | egrep -o $ip_regex | sort | uniq > allnodes
 	rm -rf .allnodes
 }
 #检测操作系统
