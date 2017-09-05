@@ -20,7 +20,7 @@ portimapigateway=28082
 portimprovider=28084
 portim3rdinf=28086
 portimweb=8443
-sleeptime=2
+sleeptime=5
 
 while [ -h "$PRG" ]; do
   ls=`ls -ld "$PRG"`
@@ -93,19 +93,29 @@ while [ "$pIDtaskengine" = "" ]
 done
 echo "taskengine start success!"
 
+#启动imtask
+echo "start im-task-start"
+#检测imtask是否启动完成
+pIimtask=`lsof -i :$portimtask|grep  "LISTEN" | awk '{print $2}'`
+echo $pIimtask
+if [ "$pIimtask" = "" ] ; then
+nohup "$CURRENT_DIR"/im/im-task-start.sh &>/dev/null &
+fi
+#imtask要建表，需先启动----------------------------
+while [ "$pIimtask" = "" ]
+  do
+  sleep $sleeptime
+  pIimtask=`lsof -i :$portimtask|grep  "LISTEN" | awk '{print $2}'`
+  echo $pIimtask &>/dev/null &
+  echo -n "."
+done
+echo "im-task-start success!"
+
 echo "start activemqserver"
 pIDactivemq=`lsof -i :$portactivemq|grep  "LISTEN" | awk '{print $2}'`
 echo $pIDactivemq 
 if [ "$pIDactivemq" = "" ] ; then
 nohup "$CURRENT_DIR"/background/springbootstartactivemqserver.sh &>/dev/null &
-fi
-
-#启动message
-echo "start messageserver"
-pIDmessage=`lsof -i :$portmessage|grep  "LISTEN" | awk '{print $2}'`
-echo $pIDmessage
-if [ "$pIDmessage" = "" ] ; then
-nohup "$CURRENT_DIR"/background/springbootstartmessage.sh &>/dev/null &
 fi
 
 
@@ -120,18 +130,19 @@ while [ "$pIDactivemq" = "" ]
 done
 echo "activemqserver start success!"
 
-while [ "$pIDmessage" = "" ]
-  do
-  sleep $sleeptime
-  pIDmessage=`lsof -i :$portmessage|grep  "LISTEN" | awk '{print $2}'`
-  echo $pIDmessage &>/dev/null &
-  echo -n "."
-done
-echo "messageserver start success!"
+
 #启动检测--------------------------------end---------------------------------
 fi
 
 if [ "$nodeplan" = "1" ] || [ "$nodetype" = "1" -a "$nodeplan" = "2" -a "$nodeno" = "1" ] || [ "$nodetype" = "1" -a "$nodeplan" = "3" -a "$nodeno" = "2" ] || [ "$nodetype" = "1" -a "$nodeplan" = "4" -a "$nodeno" = "2" ] || [ "$nodetype" = "3" -a "$nodeplan" = "2" -a "$nodeno" = "1" ] || [ "$nodetype" = "3" -a "$nodeplan" = "3" -a "$nodeno" = "2" ] || [ "$nodetype" = "3" -a "$nodeplan" = "4" -a "$nodeno" = "2" ]; then
+#启动message
+echo "start messageserver"
+pIDmessage=`lsof -i :$portmessage|grep  "LISTEN" | awk '{print $2}'`
+echo $pIDmessage
+if [ "$pIDmessage" = "" ] ; then
+nohup "$CURRENT_DIR"/background/springbootstartmessage.sh &>/dev/null &
+fi
+
 #启动i18nserver
 echo "start i18nserver"
 pIDi18nserver=`lsof -i :$porti18nserver|grep  "LISTEN" | awk '{print $2}'`
@@ -148,8 +159,6 @@ if [ "$pIDcmdb" = "" ] ; then
 nohup "$CURRENT_DIR"/background/springbootstartcmdb.sh &>/dev/null &
 fi
 
-
-
 #启动vspheremanage
 echo "start vspheremanage"
 pIDvspheremanage=`lsof -i :$portvspheremanage|grep  "LISTEN" | awk '{print $2}'`
@@ -159,6 +168,16 @@ nohup "$CURRENT_DIR"/background/springbootstartvspheremanage.sh &>/dev/null &
 fi
 
 #启动检测-----------------------------start-------------------------------------
+
+while [ "$pIDmessage" = "" ]
+  do
+  sleep $sleeptime
+  pIDmessage=`lsof -i :$portmessage|grep  "LISTEN" | awk '{print $2}'`
+  echo $pIDmessage &>/dev/null &
+  echo -n "."
+done
+echo "messageserver start success!"
+
 while [ "$pIDi18nserver" = "" ]
   do
   sleep $sleeptime
@@ -177,8 +196,6 @@ while [ "$pIDcmdb" = "" ]
 done
 echo "cmdb start success!"
 
-
-
 while [ "$pIDvspheremanage" = "" ]
   do
   sleep $sleeptime
@@ -187,6 +204,7 @@ while [ "$pIDvspheremanage" = "" ]
   echo -n "."
 done
 echo "vspheremanage start success!"
+
 #启动检测-----------------------------end-------------------------------------
 fi
 
@@ -247,23 +265,6 @@ fi
 
 if [ "$nodeplan" = "1" ] || [ "$nodetype" = "1" -a "$nodeplan" = "2" -a "$nodeno" = "2" ] || [ "$nodetype" = "1" -a "$nodeplan" = "3" -a "$nodeno" = "3" ] || [ "$nodetype" = "1" -a "$nodeplan" = "4" -a "$nodeno" = "4" ] || [ "$nodetype" = "3" -a "$nodeplan" = "2" -a "$nodeno" = "2" ] || [ "$nodetype" = "3" -a "$nodeplan" = "3" -a "$nodeno" = "3" ] || [ "$nodetype" = "3" -a "$nodeplan" = "4" -a "$nodeno" = "4" ]; then
 
-#启动imtask
-echo "start im-task-start"
-#检测imtask是否启动完成
-pIimtask=`lsof -i :$portimtask|grep  "LISTEN" | awk '{print $2}'`
-echo $pIimtask
-if [ "$pIimtask" = "" ] ; then
-nohup "$CURRENT_DIR"/im/im-task-start.sh &>/dev/null &
-fi
-#imtask要建表，需先启动----------------------------
-while [ "$pIimtask" = "" ]
-  do
-  sleep $sleeptime
-  pIimtask=`lsof -i :$portimtask|grep  "LISTEN" | awk '{print $2}'`
-  echo $pIimtask &>/dev/null &
-  echo -n "."
-done
-echo "im-task-start success!"
 
 #启动improvider
 echo "start im-provider-start"
@@ -395,8 +396,6 @@ echo $pIDvsphereagent
 if [ "$pIDvsphereagent" = "" ] ; then
 nohup "$CURRENT_DIR"/background/springbootstartvsphereagent.sh &>/dev/null &
 fi
-
-
 
 #启动检测-----------------------------start-------------------------------------
 while [ "$pIDgatherframe" = "" ]
