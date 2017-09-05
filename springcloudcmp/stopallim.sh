@@ -27,11 +27,11 @@ ssh-interconnect(){
 
 #启动cmp
 start_internode(){
-	echo_green "启动CMP开始..."
+	echo_green "启动IM开始..."
 	#启动主控节点1或集中式启动串行启动！
 	local k=0
 	#从文件里读取ip节点组，一行为一个组
-        cat haiplist | while read line
+        for line in $(cat haiplist)
         do
                 SSH_HOST=($line)
                 echo "启动节点组"
@@ -91,14 +91,14 @@ EOF
 		echo "节点检测成功"
 		done
 	done
-	echo_green "启动CMP完成..."
+	echo_green "启动IM完成..."
 }
 
 #关闭cmp
 stop_internode(){
-	echo_green "关闭CMP开始..."
+	echo_green "关闭IM开始..."
 	#从文件里读取ip节点组，一行为一个组
-        cat haiplist | while read line
+	for line in $(cat haiplist)
 	do
                 echo "关闭节点组"
 		for i in $line
@@ -117,12 +117,12 @@ EOF
 				echo "CMP已关闭"
 			fi
 		else
-			echo_red "尚未创建$cmpuser用户,请手动关闭服务后，再执行！"
-			exit
+			echo_yellow "尚未创建$cmpuser用户,请手动关闭服务！"
+		#	exit
 		fi
 		done
 	done
-	echo_green "所有节点CMP关闭完成..."
+	echo_green "所有节点IM关闭完成..."
 }
 
 #批量关cmpim服务

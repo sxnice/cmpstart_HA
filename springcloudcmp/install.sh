@@ -200,6 +200,7 @@ EOF
 EOF
                 echo "complete..." 
 	done
+	rm -rf allnodes
 	echo_green "检测安装环境完成..."
 }
 
@@ -264,6 +265,7 @@ ssh-interconnect(){
         do
 		$ssh_init_path $line
 	done
+	rm -rf allnodes
 	echo_green "建立对等互信完成..."
 }
 
@@ -301,7 +303,8 @@ copy-internode(){
 		do
 			echo "复制文件到"$i 
 			#放根目录下
-			scp -r ./ "$i":$CURRENT_DIR
+			ssh $i mkdir -p $CURRENT_DIR
+			scp -r ./background ./im ./config startIM.sh startIM_BX.sh stopIM.sh im.config  "$i":$CURRENT_DIR
 			#赋权
 			ssh $i <<EOF
 			rm -rf /tmp/spring.log
@@ -317,8 +320,7 @@ copy-internode(){
 			chmod 740 "$CURRENT_DIR"/background/*.sh
 			chmod 740 "$CURRENT_DIR"/im/*.sh
 			chmod 640 "$CURRENT_DIR"/im/*.war
-			chmod 600 "$CURRENT_DIR"/my.cnf
-			chmod 600 "$CURRENT_DIR"/colorecho
+			chmod 600 "$CURRENT_DIR"/im.config
 			chmod 600 "$CURRENT_DIR"/config/*.yml
 			su $cmpuser
 			umask 077
@@ -349,7 +351,7 @@ env_internode(){
 		echo_green "配置IM参数开始..."
 		#从文件里读取ip节点组，一行为一个组
 		local k=0
-            	cat haiplist | while read line
+		cat haiplist | while read line
             	do
                 echo "节点组配置开始"
 		local t=1
@@ -384,7 +386,7 @@ env_internode(){
 			echo_yellow "设置hanode="$hanoder
 
 			
-			ssh $j <<EOF
+			ssh -n $j <<EOF
             		sed -i /nodeplan/d /etc/environment
 			sed -i /nodetype/d /etc/environment
 			sed -i /nodeno/d /etc/environment
@@ -433,7 +435,7 @@ EOF
 		echo "节点组配置完成..."
 		let k=k+1
 	    done
-		echo_green "配置各节点环境变量结束..."
+		echo_green "配置IM参数结束..."
 	
 }
 
@@ -515,18 +517,18 @@ EOF
 
 #启动cmp
 start_internode(){
-	echo_green "启动CMP开始..."
+	echo_green "启动IM开始..."
 	#启动主控节点1或集中式启动串行启动！
 	local k=0
 	#从文件里读取ip节点组，一行为一个组
-        cat haiplist | while read line
+	cat haiplist | while read line
         do
                 SSH_HOST=($line)
                 echo "启动节点组"
 		for i in "${SSH_HOST[@]}"
 		do
 			echo "启动节点"$i
-			ssh $i <<EOF
+			ssh -n $i <<EOF
 			su - $cmpuser
 			source /etc/environment
 			umask 077
@@ -546,7 +548,7 @@ EOF
 			continue
 		fi
 		echo "启动节点"$i
-		 ssh $i <<EOF
+		 ssh -n $i <<EOF
 		 su - $cmpuser
 		 source /etc/environment
 		 umask 077
@@ -567,7 +569,7 @@ EOF
 			continue
 		fi
 		echo "检测节点"$i
-		 ssh $i <<EOF
+		 ssh -n $i <<EOF
 		 su - $cmpuser
 		 source /etc/environment
 		 umask 077
@@ -579,12 +581,12 @@ EOF
 		echo "节点检测成功"
 		done
 	done
-	echo_green "启动CMP完成..."
+	echo_green "启动IM完成..."
 }
 
 #关闭cmp
 stop_internode(){
-	echo_green "关闭CMP开始..."
+	echo_green "关闭IM开始..."
 	for i in $(cat haiplist)
 	do
 		echo "关闭节点"$i
@@ -605,7 +607,7 @@ EOF
 		#	exit
 		fi
 	done
-	echo_green "所有节点CMP关闭完成..."
+	echo_green "所有节点IM关闭完成..."
 }
 
 #清空安装
