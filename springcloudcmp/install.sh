@@ -47,12 +47,12 @@ allnodes_get(){
 }
 #检测操作系统
 check_ostype(){
-	local ostype=`ssh $1 head -n 1 /etc/issue | awk '{print $1}'`
+	local ostype=`ssh -n $1 head -n 1 /etc/issue | awk '{print $1}'`
 	if [ "$ostype" == "Ubuntu" ]; then
-		local version=`ssh $1 head -n 1 /etc/issue | awk  '{print $2}'| awk -F . '{print $1}'`
+		local version=`ssh -n $1 head -n 1 /etc/issue | awk  '{print $2}'| awk -F . '{print $1}'`
 		echo ubuntu_$version
 	else
-		local centos=`ssh $1 rpm -qa | grep sed | awk -F . '{print $4}'`
+		local centos=`ssh -n $1 rpm -qa | grep sed | awk -F . '{print $4}'`
 		if [ "$centos" == "el6" ]; then
 			echo centos_6
 		elif [ "$centos" == "el7" ]; then
@@ -76,73 +76,72 @@ install-interpackage(){
 		local ostype=`check_ostype $i`
 		local os=`echo $ostype | awk -F _ '{print $1}'`
 		if [ "$os" == "centos" ]; then
-        		local iptables=`ssh  "$i" rpm -qa |grep iptables |wc -l`
+        		local iptables=`ssh -n "$i" rpm -qa |grep iptables |wc -l`
        			 if [ "$iptables" -gt 0 ]; then
                 		echo "iptables 已安装"
         		else
                 		if [ "${ostype}" == "centos_6" ]; then
                         		 scp  ../packages/centos6_iptables/* "$i":/root/
-                         		 ssh $i rpm -Uvh ~/iptables-1.4.7-16.el6.x86_64.rpm
+                         		 ssh -n $i rpm -Uvh ~/iptables-1.4.7-16.el6.x86_64.rpm
                			 elif [ "${ostype}" == "centos_7" ]; then
                         		 scp ../packages/centos7_iptables/* "$i":/root/
-                        		 ssh $i rpm -Uvh ~/iptables-1.4.21-17.el7.x86_64.rpm ~/libnetfilter_conntrack-1.0.6-1.el7_3.x86_64.rpm ~/libmnl-1.0.3-7.el7.x86_64.rpm ~/libnfnetlink-1.0.1-4.el7.x86_64.rpm ~/iptables-services-1.4.21-17.el7.x86_64.rpm
+                        		 ssh -n $i rpm -Uvh ~/iptables-1.4.21-17.el7.x86_64.rpm ~/libnetfilter_conntrack-1.0.6-1.el7_3.x86_64.rpm ~/libmnl-1.0.3-7.el7.x86_64.rpm ~/libnfnetlink-1.0.1-4.el7.x86_64.rpm ~/iptables-services-1.4.21-17.el7.x86_64.rpm
                			 fi
         		fi
-	        	local lsof=`ssh  "$i" rpm -qa |grep lsof |wc -l`
+	        	local lsof=`ssh -n "$i" rpm -qa |grep lsof |wc -l`
                 	 if [ "$lsof" -gt 0 ]; then
                         	echo "lsof 已安装"
                		 else
                 		if [ "${ostype}" == "centos_6" ]; then
                         		 scp  ../packages/centos6_lsof/* "$i":/root/
-                         		 ssh $i rpm -Uvh ~/lsof-4.82-5.el6.x86_64.rpm
+                         		 ssh -n $i rpm -Uvh ~/lsof-4.82-5.el6.x86_64.rpm
                			 elif [ "${ostype}" == "centos_7" ]; then
                         		 scp ../packages/centos7_lsof/* "$i":/root/
-                         		 ssh $i rpm -Uvh ~/lsof-4.87-4.el7.x86_64.rpm
+                         		 ssh -n $i rpm -Uvh ~/lsof-4.87-4.el7.x86_64.rpm
                			 fi
                		 fi
-			 local psmisc=`ssh  "$i" rpm -qa |grep psmisc |wc -l`
+			 local psmisc=`ssh -n "$i" rpm -qa |grep psmisc |wc -l`
                          if [ "$psmisc" -gt 0 ]; then
                                 echo "psmisc 已安装"
                          else
                                 if [ "${ostype}" == "centos_6" ]; then
                                          scp  ../packages/centos6_psmisc/* "$i":/root/
-                                         ssh $i rpm -Uvh ~/psmisc-22.6-24.el6.x86_64.rpm
+                                         ssh -n $i rpm -Uvh ~/psmisc-22.6-24.el6.x86_64.rpm
                                  elif [ "${ostype}" == "centos_7" ]; then
                                          scp ../packages/centos7_psmisc/* "$i":/root/
-                                         ssh $i rpm -Uvh ~/psmisc-22.20-11.el7.x86_64.rpm
+                                         ssh -n $i rpm -Uvh ~/psmisc-22.20-11.el7.x86_64.rpm
                                  fi
                          fi
-			 local gcc=`ssh  "$i" rpm -qa |grep gcc |wc -l`
+			 local gcc=`ssh -n "$i" rpm -qa |grep gcc |wc -l`
                          if [ "$gcc" -gt 1 ]; then
                                 echo "gcc 已安装"
                          else
                                 if [ "${ostype}" == "centos_6" ]; then
                                          scp -r  ../packages/centos6_gcc "$i":/root/
-                                         ssh $i rpm -Uvh --replacepkgs ~/centos6_gcc/*
-					 ssh $i <<EOF
+					 ssh -n $i <<EOF
                                              rpm -Uvh --replacepkgs ~/centos6_gcc/*
 					     rm -rf ~/centos6_gcc
                                              exit
 EOF
                                  elif [ "${ostype}" == "centos_7" ]; then
                                          scp -r ../packages/centos7_gcc "$i":/root/
-					 ssh $i <<EOF
+					 ssh -n $i <<EOF
                                              rpm -Uvh --replacepkgs ~/centos7_gcc/*
 					     rm -rf ~/centos7_gcc
                                              exit
 EOF
                                  fi
                          fi
-                         local tcl=`ssh  "$i" rpm -qa |grep tcl |wc -l`
+                         local tcl=`ssh -n "$i" rpm -qa |grep tcl |wc -l`
                          if [ "$tcl" -gt 0 ]; then
                                 echo "tcl 已安装"
                          else
                                 if [ "${ostype}" == "centos_6" ]; then
                                          scp  ../packages/centos6_tcl/* "$i":/root/
-                                         ssh $i rpm -Uvh --replacepkgs ~/tcl-8.5.7-6.el6.x86_64.rpm
+                                         ssh -n $i rpm -Uvh --replacepkgs ~/tcl-8.5.7-6.el6.x86_64.rpm
                                  elif [ "${ostype}" == "centos_7" ]; then
                                          scp ../packages/centos7_tcl/* "$i":/root/
-                                         ssh $i rpm -Uvh --replacepkgs  ~/tcl-8.5.13-8.el7.x86_64.rpm
+                                         ssh -n $i rpm -Uvh --replacepkgs  ~/tcl-8.5.13-8.el7.x86_64.rpm
                                  fi
                          fi
 		elif [ "$os" == "ubuntu" ]; then
@@ -151,7 +150,7 @@ EOF
 				exit
 			elif [ "$ostype" == "ubuntu_14" ]; then
 				scp  ../packages/ubuntu14/* "$i":/root/
-                                ssh $i dpkg -i ~/lsof_4.86+dfsg-1ubuntu2_amd64.deb ~/iptables_1.4.21-1ubuntu1_amd64.deb ~/libnfnetlink0_1.0.1-2_amd64.deb ~/libxtables10_1.4.21-1ubuntu1_amd64.deb ~/psmisc_22.20-1ubuntu2_amd64.deb
+                                ssh -n $i dpkg -i ~/lsof_4.86+dfsg-1ubuntu2_amd64.deb ~/iptables_1.4.21-1ubuntu1_amd64.deb ~/libnfnetlink0_1.0.1-2_amd64.deb ~/libxtables10_1.4.21-1ubuntu1_amd64.deb ~/psmisc_22.20-1ubuntu2_amd64.deb
 			elif [ "$ostype" == "ubuntu_16" ]; then
 				echo_red "$ostype"暂不提供安装                                
                                 exit
@@ -168,11 +167,11 @@ EOF
 	for i in $(cat haiplist)
 	do
                 echo "安装jdk1.8到节点"$i
-                ssh "$i" mkdir -p "$JDK_DIR"
+                ssh -n "$i" mkdir -p "$JDK_DIR"
 
                 scp -r ../packages/jdk/* "$i":"$JDK_DIR"
                 scp ../packages/jce/* "$i":"$JDK_DIR"/jre/lib/security/
-                ssh $i  <<EOF
+                ssh -n $i  <<EOF
                     chmod 755 "$JDK_DIR"/bin/*
                     sed -i /JAVA_HOME/d /etc/profile
                     echo JAVA_HOME="$JDK_DIR" >> /etc/profile
@@ -190,7 +189,7 @@ EOF
                 
 EOF
                 echo "系统配置节点"$i
-                ssh "$i" <<EOF
+                ssh -n "$i" <<EOF
                     sed -i /$cmpuser/d /etc/security/limits.conf
                     echo $cmpuser soft nproc unlimited >>/etc/security/limits.conf
                     echo $cmpuser hard nproc unlimited >>/etc/security/limits.conf
@@ -215,10 +214,10 @@ install_redis(){
 	for i in "${REDIS_HOST[@]}"
                 do
                 echo "安装节点..."$i
-		ssh "$i" mkdir -p "$REDIS_DIR"
+		ssh -n "$i" mkdir -p "$REDIS_DIR"
                 scp -r ../packages/redis/* "$i":"$REDIS_DIR"
                 #编译安装
-		ssh $i <<EOF
+		ssh -n $i <<EOF
 		cd $REDIS_DIR
 		make 
 		make install
@@ -226,14 +225,14 @@ EOF
 		#1主1哨，2从2哨
 		if [ "$k" -eq 1 ]; then
                         scp ./redismaster.conf "$i":"$REDIS_DIR"/redismaster.conf
-			ssh $i <<EOF
+			ssh -n $i <<EOF
 			sed -i 's/redismport/$mport/g' "$REDIS_DIR"/redismaster.conf
 			sed -i 's/redismip/$i/g' "$REDIS_DIR"/redismaster.conf
 			redis-server "$REDIS_DIR"/redismaster.conf
 EOF
                 elif [ "$k" -gt 1 ]; then
 			scp ./redisslave.conf "$i":"$REDIS_DIR"/redisslave.conf
-			ssh $i <<EOF
+			ssh -n $i <<EOF
                         sed -i 's/redisrport/$rport/g' "$REDIS_DIR"/redisslave.conf
 			sed -i 's/redismport/$mport/g' "$REDIS_DIR"/redisslave.conf
                         sed -i 's/redisrip/$i/g' "$REDIS_DIR"/redisslave.conf
@@ -242,7 +241,7 @@ EOF
 EOF
                 fi
 			scp ./redissentinel.conf "$i":"$REDIS_DIR"/redissentinel.conf
-                        ssh $i <<EOF
+                        ssh -n $i <<EOF
                         sed -i 's/redismport/$mport/g' "$REDIS_DIR"/redissentinel.conf
 			sed -i 's/redissport/$sport/g' "$REDIS_DIR"/redissentinel.conf
                         sed -i 's/redissip/$i/g' "$REDIS_DIR"/redissentinel.conf
@@ -280,7 +279,7 @@ user-internode(){
 		$ssh_pass_path $line
 		for i in "${SSH_HOST[@]}"
 		do
-			ssh $i <<EOF
+			ssh -n $i <<EOF
 			echo "$cmpuser:$cmppass" | chpasswd
 EOF
 		done
@@ -303,10 +302,10 @@ copy-internode(){
 		do
 			echo "复制文件到"$i 
 			#放根目录下
-			ssh $i mkdir -p $CURRENT_DIR
+			ssh -n $i mkdir -p $CURRENT_DIR
 			scp -r ./background ./im ./config startIM.sh startIM_BX.sh stopIM.sh im.config imstart_chk.sh "$i":$CURRENT_DIR
 			#赋权
-			ssh $i <<EOF
+			ssh -n $i <<EOF
 			rm -rf /tmp/spring.log
 			rm -rf /tmp/modelTypeName.data
 			chown -R $cmpuser.$cmpuser $CURRENT_DIR
@@ -470,37 +469,37 @@ keeplived_settings(){
         do
 	echo "配置节点"$i
 	#需在满足条件下才能安装
-	local nplan=`ssh $i echo \\$nodeplan`
-        local ntype=`ssh $i echo \\$nodetype`
-        local nno=`ssh $i echo \\$nodeno`
+	local nplan=`ssh -n $i echo \\$nodeplan`
+        local ntype=`ssh -n $i echo \\$nodetype`
+        local nno=`ssh -n $i echo \\$nodeno`
 	if [ "$nplan" = "1" ] || [ "$ntype" = "1" -a "$nplan" = "2" -a "$nno" = "2" ] || [ "$ntype" = "1" -a "$nplan" = "3" -a "$nno" = "2" ] || [ "$ntype" = "1" -a "$nplan" = "4" -a "$nno" = "3" ] || [ "$ntype" = "3" -a "$nplan" = "2" -a "$nno" = "2" ] || [ "$ntype" = "3" -a "$nplan" = "3" -a "$nno" = "2" ] || [ "$ntype" = "3" -a "$nplan" = "4" -a "$nno" = "3" ]; then
 	#centos7对于keepalived在/etc/init.d/没有脚本，需单独复制
 	local ostype=`check_ostype $i`
-	local keepalived=`ssh  "$i" rpm -qa |grep keepalived |wc -l`
+	local keepalived=`ssh -n "$i" rpm -qa |grep keepalived |wc -l`
 	if [ "$keepalived" -gt 0 ]; then
 		echo "keepalived 已安装"
 	else
 		if [ "$ostype" == "centos_6" ]; then
 			scp -r ../packages/centos6_keepalived "$i":/root/
-			ssh $i <<EOF
+			ssh -n $i <<EOF
                         rpm -Uvh --replacepkgs ~/centos6_keepalived/*
                         exit
 EOF
 		elif [ "$ostype" == "centos_7" ]; then
 			scp -r ../packages/centos7_keepalived "$i":/root/
 			scp ./keepalived "$i":/etc/init.d/
-			ssh $i <<EOF
+			ssh -n $i <<EOF
 			rpm -Uvh --replacepkgs ~/centos7_keepalived/*
 			exit
 EOF
 					
 		fi
 	fi
-	ssh $i mkdir -p "$KEEPALIVED_DIR"
+	ssh -n $i mkdir -p "$KEEPALIVED_DIR"
 	scp ./keepalived.conf "$i":/etc/keepalived/
 	scp ./checkZuul.sh "$i":"$KEEPALIVED_DIR"
 
-	ssh $i <<EOF
+	ssh -n $i <<EOF
 		chmod 740 /usr/local/keepalived/checkZuul.sh
 		chmod 740 /etc/init.d/keepalived
 		sed -i '/prioweight/{s/prioweight/$k/}' /etc/keepalived/keepalived.conf
@@ -548,7 +547,7 @@ EOF
 			continue
 		fi
 		echo "启动节点"$i
-		 ssh -n $i <<EOF
+		 ssh -fn $i <<EOF
 		 su - $cmpuser
 		 source /etc/environment
 		 umask 077
@@ -590,11 +589,11 @@ stop_internode(){
 	for i in $(cat haiplist)
 	do
 		echo "关闭节点"$i
-		local user=`ssh $i cat /etc/passwd | sed -n /$cmpuser/p |wc -l`
+		local user=`ssh -n $i cat /etc/passwd | sed -n /$cmpuser/p |wc -l`
 		if [ "$user" -eq 1 ]; then
-			local jars=`ssh $i ps -u $cmpuser | grep -v PID | wc -l`
+			local jars=`ssh -n $i ps -u $cmpuser | grep -v PID | wc -l`
 			if [ "$jars" -gt 0 ]; then
-				ssh $i <<EOF
+				ssh -n $i <<EOF
 				killall -9 -u $cmpuser
 				exit
 EOF
@@ -616,7 +615,7 @@ uninstall_internode(){
 	for i in $(cat haiplist)
 	do
 		echo "删除节点"$i
-		ssh $i <<EOF
+		ssh -n $i <<EOF
 		rm -rf "$CURRENT_DIR"
 		rm -rf /home/cmpimuser/
 		rm -rf /usr/java/
@@ -643,9 +642,9 @@ mongo_install(){
 	for i in "${MONGO_HOST[@]}"
         do
                 echo "安装节点..."$i
-		ssh "$i" mkdir -p "$MONGDO_DIR"
+		ssh -n "$i" mkdir -p "$MONGDO_DIR"
 		scp -r ../packages/mongo/* "$i":"$MONGDO_DIR"
-		ssh $i <<EOF
+		ssh -n $i <<EOF
 		echo "创建mongo用户"
 		groupadd mongo
 		useradd -r -m -g  mongo mongo
@@ -679,23 +678,23 @@ EOF
 		scp ./init_mongo.sh "$i":/root/
 		#设置mongdodb密码	
 		declare -a MONGOS=($MONGO_H $MONGO_USER $MONGO_PASSWORD) 
-		ssh $i /root/init_mongo.sh "${MONGOS[@]}"
+		ssh -n $i /root/init_mongo.sh "${MONGOS[@]}"
 	fi
 	let k=k+1
 	echo "设置需验证登录"
-	ssh $i <<EOF
+	ssh -n $i <<EOF
+		echo "配置开机启动"
+		sed -i /mongo/d /etc/rc.d/rc.local
+        	echo " $MONGDO_DIR/bin/mongod --config $MONGDO_DIR/mongodb.conf" >> /etc/rc.d/rc.local
+        	chmod u+x /etc/rc.d/rc.local
+		
 		pkill mongod
 		sleep 10
 		su - mongo
 		cd $MONGDO_DIR
 		echo "restart mongodb"
 		nohup ./bin/mongod --config mongodb.conf  &>/dev/null &
-		exit
 EOF
-	#配置开机启动
-	sed -i /mongo/d /etc/rc.d/rc.local
-	echo " $MONGDO_DIR/bin/mongod --config $MONGDO_DIR/mongodb.conf" >> /etc/rc.d/rc.local
-	chmod u+x /etc/rc.d/rc.local
 	echo "complete..."
 	done
 	echo_green "安装完成"
@@ -798,4 +797,3 @@ do
         ;;
   esac
 done
-
