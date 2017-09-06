@@ -31,7 +31,7 @@ start_internode(){
 	#启动主控节点1或集中式启动串行启动！
 	local k=0
 	#从文件里读取ip节点组，一行为一个组
-        for line in $(cat haiplist)
+	cat haiplist | while read line
         do
                 SSH_HOST=($line)
                 echo "启动节点组"
@@ -58,7 +58,7 @@ EOF
 			continue
 		fi
 		echo "启动节点"$i
-		 ssh $i <<EOF
+		 ssh -fn $i <<EOF
 		 su - $cmpuser
 		 source /etc/environment
 		 umask 077
@@ -97,16 +97,12 @@ EOF
 #关闭cmp
 stop_internode(){
 	echo_green "关闭IM开始..."
-	#从文件里读取ip节点组，一行为一个组
-	for line in $(cat haiplist)
+	for i in $(cat haiplist)
 	do
-                echo "关闭节点组"
-		for i in $line
-		do
 		echo "关闭节点"$i
-		local user=`ssh $i cat /etc/passwd | sed -n /$cmpuser/p |wc -l`
+		local user=`ssh -n $i cat /etc/passwd | sed -n /$cmpuser/p |wc -l`
 		if [ "$user" -eq 1 ]; then
-			local jars=`ssh $i ps -u $cmpuser | grep -v PID | wc -l`
+			local jars=`ssh -n $i ps -u $cmpuser | grep -v PID | wc -l`
 			if [ "$jars" -gt 0 ]; then
 				ssh $i <<EOF
 				killall -9 -u $cmpuser
@@ -117,10 +113,9 @@ EOF
 				echo "CMP已关闭"
 			fi
 		else
-			echo_yellow "尚未创建$cmpuser用户,请手动关闭服务！"
+			echo_yellow "尚未创建$cmpuser用户,请手动关闭服务!"
 		#	exit
 		fi
-		done
 	done
 	echo_green "所有节点IM关闭完成..."
 }

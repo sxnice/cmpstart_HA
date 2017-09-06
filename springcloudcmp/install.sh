@@ -118,14 +118,14 @@ install-interpackage(){
                          else
                                 if [ "${ostype}" == "centos_6" ]; then
                                          scp -r  ../packages/centos6_gcc "$i":/root/
-					 ssh -n $i <<EOF
+					 ssh $i <<EOF
                                              rpm -Uvh --replacepkgs ~/centos6_gcc/*
 					     rm -rf ~/centos6_gcc
                                              exit
 EOF
                                  elif [ "${ostype}" == "centos_7" ]; then
                                          scp -r ../packages/centos7_gcc "$i":/root/
-					 ssh -n $i <<EOF
+					 ssh $i <<EOF
                                              rpm -Uvh --replacepkgs ~/centos7_gcc/*
 					     rm -rf ~/centos7_gcc
                                              exit
@@ -171,7 +171,7 @@ EOF
 
                 scp -r ../packages/jdk/* "$i":"$JDK_DIR"
                 scp ../packages/jce/* "$i":"$JDK_DIR"/jre/lib/security/
-                ssh -n $i  <<EOF
+                ssh "$i"  <<EOF
                     chmod 755 "$JDK_DIR"/bin/*
                     sed -i /JAVA_HOME/d /etc/profile
                     echo JAVA_HOME="$JDK_DIR" >> /etc/profile
@@ -189,7 +189,7 @@ EOF
                 
 EOF
                 echo "系统配置节点"$i
-                ssh -n "$i" <<EOF
+                ssh "$i" <<EOF
                     sed -i /$cmpuser/d /etc/security/limits.conf
                     echo $cmpuser soft nproc unlimited >>/etc/security/limits.conf
                     echo $cmpuser hard nproc unlimited >>/etc/security/limits.conf
@@ -217,7 +217,7 @@ install_redis(){
 		ssh -n "$i" mkdir -p "$REDIS_DIR"
                 scp -r ../packages/redis/* "$i":"$REDIS_DIR"
                 #编译安装
-		ssh -n $i <<EOF
+		ssh $i <<EOF
 		cd $REDIS_DIR
 		make 
 		make install
@@ -225,14 +225,14 @@ EOF
 		#1主1哨，2从2哨
 		if [ "$k" -eq 1 ]; then
                         scp ./redismaster.conf "$i":"$REDIS_DIR"/redismaster.conf
-			ssh -n $i <<EOF
+			ssh $i <<EOF
 			sed -i 's/redismport/$mport/g' "$REDIS_DIR"/redismaster.conf
 			sed -i 's/redismip/$i/g' "$REDIS_DIR"/redismaster.conf
 			redis-server "$REDIS_DIR"/redismaster.conf
 EOF
                 elif [ "$k" -gt 1 ]; then
 			scp ./redisslave.conf "$i":"$REDIS_DIR"/redisslave.conf
-			ssh -n $i <<EOF
+			ssh $i <<EOF
                         sed -i 's/redisrport/$rport/g' "$REDIS_DIR"/redisslave.conf
 			sed -i 's/redismport/$mport/g' "$REDIS_DIR"/redisslave.conf
                         sed -i 's/redisrip/$i/g' "$REDIS_DIR"/redisslave.conf
@@ -241,7 +241,7 @@ EOF
 EOF
                 fi
 			scp ./redissentinel.conf "$i":"$REDIS_DIR"/redissentinel.conf
-                        ssh -n $i <<EOF
+                        ssh $i <<EOF
                         sed -i 's/redismport/$mport/g' "$REDIS_DIR"/redissentinel.conf
 			sed -i 's/redissport/$sport/g' "$REDIS_DIR"/redissentinel.conf
                         sed -i 's/redissip/$i/g' "$REDIS_DIR"/redissentinel.conf
@@ -273,13 +273,13 @@ user-internode(){
 	echo_green "建立用户开始..."
 	local ssh_pass_path=./ssh-pass.sh
         #从文件里读取ip节点组，一行为一个组
-        for line in $(cat ./haiplist)
+        for line in $(cat haiplist)
         do
         	SSH_HOST=($line)
 		$ssh_pass_path $line
 		for i in "${SSH_HOST[@]}"
 		do
-			ssh -n $i <<EOF
+			ssh $i <<EOF
 			echo "$cmpuser:$cmppass" | chpasswd
 EOF
 		done
@@ -305,7 +305,7 @@ copy-internode(){
 			ssh -n $i mkdir -p $CURRENT_DIR
 			scp -r ./background ./im ./config startIM.sh startIM_BX.sh stopIM.sh im.config imstart_chk.sh "$i":$CURRENT_DIR
 			#赋权
-			ssh -n $i <<EOF
+			ssh $i <<EOF
 			rm -rf /tmp/spring.log
 			rm -rf /tmp/modelTypeName.data
 			chown -R $cmpuser.$cmpuser $CURRENT_DIR
@@ -385,7 +385,7 @@ env_internode(){
 			echo_yellow "设置hanode="$hanoder
 
 			
-			ssh -n $j <<EOF
+			ssh $j <<EOF
             		sed -i /nodeplan/d /etc/environment
 			sed -i /nodetype/d /etc/environment
 			sed -i /nodeno/d /etc/environment
@@ -401,7 +401,7 @@ env_internode(){
 			echo "dcname=$dcnamer">>/etc/environment
 			echo "eurekaiprep=$eurekaiprepr">>/etc/environment
                         echo "hanode=$hanoder">>/etc/environment
-                        echo "export nodeplan nodetype nodeno eurekaip dcname nodeplan eurekaiprep hanode">>/etc/environment
+                        echo "export nodeplan nodetype nodeno eurekaip dcname eurekaiprep hanode">>/etc/environment
 			source /etc/environment
 
 			su - $cmpuser
@@ -424,7 +424,7 @@ env_internode(){
                         echo "dcname=$dcnamer">>~/.bashrc
 			echo "eurekaiprep=$eurekaiprepr">>~/.bashrc
                         echo "hanode=$hanoder">>~/.bashrc
-                        echo "export nodeplan nodetype nodeno eurekaip dcname nodeplan eurekaiprep hanode">>~/.bashrc
+                        echo "export nodeplan nodetype nodeno eurekaip dcname eurekaiprep hanode">>~/.bashrc
                         source ~/.bashrc
 			exit
 EOF
@@ -481,14 +481,14 @@ keeplived_settings(){
 	else
 		if [ "$ostype" == "centos_6" ]; then
 			scp -r ../packages/centos6_keepalived "$i":/root/
-			ssh -n $i <<EOF
+			ssh $i <<EOF
                         rpm -Uvh --replacepkgs ~/centos6_keepalived/*
                         exit
 EOF
 		elif [ "$ostype" == "centos_7" ]; then
 			scp -r ../packages/centos7_keepalived "$i":/root/
 			scp ./keepalived "$i":/etc/init.d/
-			ssh -n $i <<EOF
+			ssh $i <<EOF
 			rpm -Uvh --replacepkgs ~/centos7_keepalived/*
 			exit
 EOF
@@ -499,7 +499,7 @@ EOF
 	scp ./keepalived.conf "$i":/etc/keepalived/
 	scp ./checkZuul.sh "$i":"$KEEPALIVED_DIR"
 
-	ssh -n $i <<EOF
+	ssh $i <<EOF
 		chmod 740 /usr/local/keepalived/checkZuul.sh
 		chmod 740 /etc/init.d/keepalived
 		sed -i '/prioweight/{s/prioweight/$k/}' /etc/keepalived/keepalived.conf
@@ -527,7 +527,7 @@ start_internode(){
 		for i in "${SSH_HOST[@]}"
 		do
 			echo "启动节点"$i
-			ssh -n $i <<EOF
+			ssh $i <<EOF
 			su - $cmpuser
 			source /etc/environment
 			umask 077
@@ -568,7 +568,7 @@ EOF
 			continue
 		fi
 		echo "检测节点"$i
-		 ssh -n $i <<EOF
+		 ssh $i <<EOF
 		 su - $cmpuser
 		 source /etc/environment
 		 umask 077
@@ -593,7 +593,7 @@ stop_internode(){
 		if [ "$user" -eq 1 ]; then
 			local jars=`ssh -n $i ps -u $cmpuser | grep -v PID | wc -l`
 			if [ "$jars" -gt 0 ]; then
-				ssh -n $i <<EOF
+				ssh $i <<EOF
 				killall -9 -u $cmpuser
 				exit
 EOF
@@ -615,7 +615,7 @@ uninstall_internode(){
 	for i in $(cat haiplist)
 	do
 		echo "删除节点"$i
-		ssh -n $i <<EOF
+		ssh $i <<EOF
 		rm -rf "$CURRENT_DIR"
 		rm -rf /home/cmpimuser/
 		rm -rf /usr/java/
@@ -644,7 +644,7 @@ mongo_install(){
                 echo "安装节点..."$i
 		ssh -n "$i" mkdir -p "$MONGDO_DIR"
 		scp -r ../packages/mongo/* "$i":"$MONGDO_DIR"
-		ssh -n $i <<EOF
+		ssh  $i <<EOF
 		echo "创建mongo用户"
 		groupadd mongo
 		useradd -r -m -g  mongo mongo
@@ -682,7 +682,7 @@ EOF
 	fi
 	let k=k+1
 	echo "设置需验证登录"
-	ssh -n $i <<EOF
+	ssh $i <<EOF
 		echo "配置开机启动"
 		sed -i /mongo/d /etc/rc.d/rc.local
         	echo " $MONGDO_DIR/bin/mongod --config $MONGDO_DIR/mongodb.conf" >> /etc/rc.d/rc.local
@@ -731,10 +731,10 @@ do
 		mongo_install
 		copy-internode
 		env_internode
-		keeplived_settings
 		iptable_imnode
 		iptable_dbnode
 		start_internode
+		keeplived_settings
         break
         ;;
     [2])
@@ -746,10 +746,10 @@ do
 		mongo_install
 		copy-internode
 		env_internode
-		keeplived_settings
 		iptable_imnode
                 iptable_dbnode
 		start_internode
+		keeplived_settings
         break
         ;;
     [3])
@@ -761,10 +761,10 @@ do
 		mongo_install
 		copy-internode
 		env_internode
-		keeplived_settings
 		iptable_imnode
                 iptable_dbnode
 		start_internode
+		keeplived_settings
         break
         ;;
     [4])
@@ -776,10 +776,10 @@ do
 		mongo_install
 		copy-internode
 		env_internode
-		keeplived_settings
 		iptable_imnode
                 iptable_dbnode
 		start_internode
+		keeplived_settings
         break
         ;;
      [5])
