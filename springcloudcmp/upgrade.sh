@@ -384,7 +384,7 @@ echo_yellow "2、仅支持相同节点数的升级！"
 echo_yellow "3、仅只对IM更新文件进行升级！"
 echo_yellow "4、非HA版的升级，请直接重新安装部署！"
 echo_yellow "-------------------------------------------"
-echo_green "控制节点节点方案，请输入编号：" 
+echo_green "控制节点节点方案，请输入编号，确认与原方案一致：" 
 sleep 3
 clear
 echo "1-----allinone服务器,每台32G内存." 
