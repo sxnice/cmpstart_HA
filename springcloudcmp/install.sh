@@ -229,6 +229,9 @@ EOF
 			sed -i 's/redismport/$mport/g' "$REDIS_DIR"/redismaster.conf
 			sed -i 's/redismip/$i/g' "$REDIS_DIR"/redismaster.conf
 			redis-server "$REDIS_DIR"/redismaster.conf
+			sed -i /redismaster/d /etc/rc.d/rc.local
+			echo redis-server "$REDIS_DIR"/redismaster.conf >>/etc/rc.d/rc.local
+                        chmod u+x /etc/rc.d/rc.local
 EOF
                 elif [ "$k" -gt 1 ]; then
 			scp ./redisslave.conf "$i":"$REDIS_DIR"/redisslave.conf
@@ -238,6 +241,9 @@ EOF
                         sed -i 's/redisrip/$i/g' "$REDIS_DIR"/redisslave.conf
 			sed -i 's/redismip/$mip/g' "$REDIS_DIR"/redisslave.conf
                         redis-server "$REDIS_DIR"/redisslave.conf
+			sed -i /redisslave/d /etc/rc.d/rc.local
+			echo redis-server "$REDIS_DIR"/redisslave.conf >>/etc/rc.d/rc.local
+                	chmod u+x /etc/rc.d/rc.local
 EOF
                 fi
 			scp ./redissentinel.conf "$i":"$REDIS_DIR"/redissentinel.conf
@@ -247,6 +253,9 @@ EOF
                         sed -i 's/redissip/$i/g' "$REDIS_DIR"/redissentinel.conf
 			sed -i 's/redismip/$mip/g' "$REDIS_DIR"/redissentinel.conf
                         redis-sentinel "$REDIS_DIR"/redissentinel.conf
+			sed -i /redis-sentinel/d /etc/rc.d/rc.local
+			echo redis-sentinel "$REDIS_DIR"/redissentinel.conf >>/etc/rc.d/rc.local
+                	chmod u+x /etc/rc.d/rc.local
 EOF
 		echo "complete..."
 	let k=k+1
