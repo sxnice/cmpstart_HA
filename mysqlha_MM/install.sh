@@ -118,13 +118,13 @@ mysql_install(){
 			else
 				if [ "$ostype" == "centos_6" ]; then
 					scp -r ../packages/centos6_keepalived "$i":/root/
-					ssh -n $i <<EOF
+					ssh $i <<EOF
                                         rpm -Uvh --replacepkgs ~/centos6_keepalived/*
                                         exit
 EOF
 				elif [ "$ostype" == "centos_7" ]; then
 					scp -r ../packages/centos7_keepalived "$i":/root/
-					ssh -n $i <<EOF
+					ssh $i <<EOF
 					rpm -Uvh --replacepkgs ~/centos7_keepalived/*
 					exit
 EOF
@@ -167,7 +167,7 @@ EOF
 			ssh -n "$i" cp "$MYSQL_DIR"/support-files/my-slave.cnf /etc/my.cnf
 		fi
 			
-		ssh -n $i <<EOF
+		ssh $i <<EOF
 			echo "创建mysql用户"
 			groupadd mysql
 			useradd -r -g mysql -s /bin/false mysql
@@ -265,7 +265,7 @@ keeplived_settings(){
 	scp ./keepalived.conf "$i":/etc/keepalived/
 	scp ./checkmysql.sh "$i":/usr/local/mysql/bin
 
-	ssh -n $i <<EOF
+	ssh $i <<EOF
 		chmod 740 /usr/local/mysql/bin/checkmysql.sh
 		chmod 740 /etc/init.d/keepalived
 		sed -i '/prioweight/{s/prioweight/$k/}' /etc/keepalived/keepalived.conf
