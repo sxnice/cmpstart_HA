@@ -285,10 +285,13 @@ user-internode(){
         for line in $(cat haiplist)
         do
         	SSH_HOST=($line)
-		$ssh_pass_path $line
 		for i in "${SSH_HOST[@]}"
 		do
+			echo =======$i=======
 			ssh $i <<EOF
+			groupadd $cmpuser
+ 			useradd -m -s  /bin/bash -g $cmpuser $cmpuser
+ 			usermod -G $cmpuser $cmpuser
 			echo "$cmpuser:$cmppass" | chpasswd
 EOF
 		done
