@@ -19,8 +19,8 @@ ssh  $i <<EOF
 		iptables -A mysqldb -p tcp --dport 3306 -j ACCEPT
 		iptables -A mysqldb -m state --state ESTABLISHED,RELATED -j ACCEPT
 		iptables -A mysqldb -p icmp --icmp-type any -j ACCEPT
-		iptables -A mysqldb -i eth0 -p 112 -j ACCEPT
-		iptables -A mysqldb -i eth0 -d 224.0.0.0/8 -j ACCEPT
+		iptables -A mysqldb -p 112 -j ACCEPT
+		iptables -A mysqldb -d 224.0.0.0/8 -j ACCEPT
 		iptables -A INPUT -j mysqldb
 		iptables -P INPUT DROP
 		exit

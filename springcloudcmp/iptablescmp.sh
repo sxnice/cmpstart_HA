@@ -21,8 +21,8 @@ ssh  $i <<EOF
 		iptables -A cmp -p tcp --dport 8443 -j ACCEPT
 		iptables -A cmp -p tcp --dport 3306 -j ACCEPT
 		iptables -A cmp -p udp --dport 123 -j ACCEPT
-		iptables -A cmp -i eth0 -p 112 -j ACCEPT
-		iptables -A cmp -i eth0 -d 224.0.0.0/8 -j ACCEPT
+		iptables -A cmp -p 112 -j ACCEPT
+		iptables -A cmp -d 224.0.0.0/8 -j ACCEPT
 		iptables -A cmp -s 127.0.0.1 -p tcp --dport 8761 -j ACCEPT
 		iptables -A cmp -s 127.0.0.1 -p tcp --dport 8888 -j ACCEPT
 		iptables -A cmp -s 127.0.0.1 -p tcp --dport 61626 -j ACCEPT
