@@ -153,7 +153,7 @@ EOF
                          else
                                 if [ "${ostype}" == "centos_6" ]; then
                                          scp  ../packages/centos6_ntp/* "$i":/root/
-                                         ssh -n $i rpm -Uvh --replacepkgs ~/ntpdate-4.2.6p5-10.el6.centos.2.x86_64.rpm
+                                         ssh -n $i rpm -Uvh --replacepkgs ~/ntpdate-4.2.6p5-10.el6.centos.2.x86_64.rpm ~/ntp-4.2.6p5-10.el6.centos.2.x86_64.rpm
                                  elif [ "${ostype}" == "centos_7" ]; then
                                          scp ../packages/centos7_ntp/* "$i":/root/
                                          ssh -n $i rpm -Uvh --replacepkgs  ~/ntp-4.2.6p5-25.el7.centos.2.x86_64.rpm
