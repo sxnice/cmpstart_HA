@@ -30,6 +30,8 @@ MONGO_PASSWORD="Pbu4@123"
 #haiplist文件存放HA节点ip组
 #IM浮动IP
 VIP="10.143.132.168"
+#时间同步服务器IP
+NTPIP="10.143.132.188"
 #-----------------------------------------------
 declare -a SSH_HOST=()
 declare -a REDIS_HOST=($REDIS_H)
@@ -45,6 +47,7 @@ allnodes_get(){
 	cat .allnodes | egrep -o "$ip_regex" | sort | uniq > allnodes
 	rm -rf .allnodes
 }
+
 #检测操作系统
 check_ostype(){
 	local ostype=`ssh -n $1 head -n 1 /etc/issue | awk '{print $1}'`
@@ -144,13 +147,25 @@ EOF
                                          ssh -n $i rpm -Uvh --replacepkgs  ~/tcl-8.5.13-8.el7.x86_64.rpm
                                  fi
                          fi
+			local ntp=`ssh -n "$i" rpm -qa |grep ntp |wc -l`
+                         if [ "$ntp" -gt 0 ]; then
+                                echo "ntp 已安装"
+                         else
+                                if [ "${ostype}" == "centos_6" ]; then
+                                         scp  ../packages/centos6_ntp/* "$i":/root/
+                                         ssh -n $i rpm -Uvh --replacepkgs ~/ntpdate-4.2.6p5-10.el6.centos.2.x86_64.rpm
+                                 elif [ "${ostype}" == "centos_7" ]; then
+                                         scp ../packages/centos7_ntp/* "$i":/root/
+                                         ssh -n $i rpm -Uvh --replacepkgs  ~/ntp-4.2.6p5-25.el7.centos.2.x86_64.rpm
+                                 fi
+                         fi
 		elif [ "$os" == "ubuntu" ]; then
 			if [ "$ostype" == "ubuntu_12" ]; then
 				echo_red "$ostype"暂不提供安装
 				exit
 			elif [ "$ostype" == "ubuntu_14" ]; then
 				scp  ../packages/ubuntu14/* "$i":/root/
-                                ssh -n $i dpkg -i ~/lsof_4.86+dfsg-1ubuntu2_amd64.deb ~/iptables_1.4.21-1ubuntu1_amd64.deb ~/libnfnetlink0_1.0.1-2_amd64.deb ~/libxtables10_1.4.21-1ubuntu1_amd64.deb ~/psmisc_22.20-1ubuntu2_amd64.deb
+                                ssh -n $i dpkg -i ~/lsof_4.86+dfsg-1ubuntu2_amd64.deb ~/iptables_1.4.21-1ubuntu1_amd64.deb ~/libnfnetlink0_1.0.1-2_amd64.deb ~/libxtables10_1.4.21-1ubuntu1_amd64.deb ~/psmisc_22.20-1ubuntu2_amd64.deb ntp_4.2.6.p5_dfsg-3ubuntu2.14.04.12_amd64.deb
 			elif [ "$ostype" == "ubuntu_16" ]; then
 				echo_red "$ostype"暂不提供安装                                
                                 exit
@@ -197,9 +212,35 @@ EOF
                     echo session required pam_limits.so >>/etc/pam.d/login
                     exit
 EOF
+		
                 echo "complete..." 
 	done
+	
+	echo "配置hosts"
+	for i in $(cat haiplist)
+	do
+		local hname=`ssh -n $i hostname`
+		echo $i" " $hname >> .hosts
+	done
+	for i in $(cat haiplist)
+	do
+		cat .hosts >> /etc/hosts
+	done
+		
+	echo "配置时间同步"
+	for i in $(cat haiplist)
+	do
+	scp ./ntp.conf $i:/etc/ntp.conf
+	ssh $i << EOF
+		sed -i '/ntpip/{s/ntpip/$NTPIP/}' /etc/ntp.conf
+		/etc/init.d/ntpd restart
+		exit
+EOF
+	done
+
+	rm -rf .hosts
 	rm -rf allnodes
+
 	echo_green "检测安装环境完成..."
 }
 
