@@ -234,7 +234,7 @@ EOF
 	scp .ntpd $i:/etc/init.d/
 	ssh $i <<EOF
 		sed -i '/ntpip/{s/ntpip/$NTPIP/}' /etc/ntp.conf
-		chmod u+x /etc/init.d/nptd
+		chmod u+x /etc/init.d/ntpd
 		/etc/init.d/ntpd restart
 		exit
 EOF
