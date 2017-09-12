@@ -231,7 +231,7 @@ EOF
 	for i in $(cat haiplist)
 	do
 	scp ./ntp.conf $i:/etc/ntp.conf
-	ssh $i << EOF
+	ssh $i <<EOF
 		sed -i '/ntpip/{s/ntpip/$NTPIP/}' /etc/ntp.conf
 		/etc/init.d/ntpd restart
 		exit
