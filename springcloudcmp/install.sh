@@ -231,7 +231,11 @@ EOF
 	for i in $(cat haiplist)
 	do
 	scp ./ntp.conf $i:/etc/ntp.conf
-	scp .ntpd $i:/etc/init.d/
+	#centos7对于ntpd在/etc/init.d/没有脚本，需单独复制
+	local ostype=`check_ostype $i`
+	if [ "$ostype" == "centos_7" ]; then
+		scp ./ntpd "$i":/etc/init.d/
+	fi
 	ssh $i <<EOF
 		sed -i '/ntpip/{s/ntpip/$NTPIP/}' /etc/ntp.conf
 		chmod u+x /etc/init.d/ntpd
