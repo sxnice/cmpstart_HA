@@ -220,11 +220,11 @@ EOF
 	for i in $(cat haiplist)
 	do
 		local hname=`ssh -n $i hostname`
-		echo $i" " $hname >> .hosts
+		echo $i" "$hname >> .hosts
 	done
 	for i in $(cat haiplist)
 	do
-		cat .hosts >> /etc/hosts
+		ssh -n $i cat .hosts >> /etc/hosts
 	done
 		
 	echo "配置时间同步"
