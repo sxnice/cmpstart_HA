@@ -266,6 +266,8 @@ keeplived_settings(){
 	scp ./checkmysql.sh "$i":/usr/local/mysql/bin
 
 	ssh $i <<EOF
+		setenforce 0
+                sed -i '/enforcing/{s/enforcing/disabled/}' /etc/selinux/config
 		chmod 740 /usr/local/mysql/bin/checkmysql.sh
 		chmod 740 /etc/init.d/keepalived
 		sed -i '/prioweight/{s/prioweight/$k/}' /etc/keepalived/keepalived.conf

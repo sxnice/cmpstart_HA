@@ -559,6 +559,8 @@ EOF
 	scp ./checkZuul.sh "$i":"$KEEPALIVED_DIR"
 
 	ssh $i <<EOF
+                setenforce 0
+                sed -i '/enforcing/{s/enforcing/disabled/}' /etc/selinux/config
 		chmod 740 /usr/local/keepalived/checkZuul.sh
 		chmod 740 /etc/init.d/keepalived
 		sed -i '/prioweight/{s/prioweight/$k/}' /etc/keepalived/keepalived.conf
