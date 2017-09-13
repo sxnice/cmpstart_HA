@@ -224,7 +224,12 @@ EOF
 	done
 	for i in $(cat haiplist)
 	do
-		ssh -n $i cat .hosts >> /etc/hosts
+		scp .hosts $i:/root
+		ssh $i <<EOF
+		cat ~/.hosts >>/etc/hosts
+		rm -rf ~/.hosts
+		exit
+EOF
 	done
 		
 	echo "配置时间同步"
