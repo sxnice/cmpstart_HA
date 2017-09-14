@@ -1,34 +1,48 @@
-PRG="$0"
-portzuulmanager=20892
+! Configuration File for keepalived
 
-while [ -h "$PRG" ]; do
-  ls=`ls -ld "$PRG"`
-  link=`expr "$ls" : '.*-> \(.*\)$'`
-  if expr "$link" : '/.*' > /dev/null; then
-    PRG="$link"
-  else
-    PRG=`dirname "$PRG"`/"$link"
-  fi
-done
-PRGDIR=`dirname "$PRG"`
-  
-CURRENT_DIR=`cd "$PRGDIR" >/dev/null; pwd`
+global_defs {
+   notification_email {
+     acassen@firewall.loc
+     failover@firewall.loc
+     sysadmin@firewall.loc
+   }
+   notification_email_from Alexandre.Cassen@firewall.loc
+   smtp_server 127.0.0.1
+   smtp_connect_timeout 30
+   router_id im-ha
+}
 
+vrrp_instance VI_1 {
+    state BACKUP
+    interface eth0
+    virtual_router_id 51
+    priority prioweight
+    advert_int 1
+    authentication {
+        auth_type PASS
+        auth_pass 1111
+    }
+    virtual_ipaddress {
+        vip
+    }
+}
 
-#启动zuulmanager
-if [ "$nodeplan" = "1" ] || [ "$nodetype" = "1" -a "$nodeplan" = "2" -a "$nodeno" = "2" ] || [ "$nodetype" = "1" -a "$nodeplan" = "3" -a "$nodeno" = "2" ] || [ "$nodetype" = "1" -a "$nodeplan" = "4" -a "$nodeno" = "3" ] || [ "$nodetype" = "3" -a "$nodeplan" = "2" -a "$nodeno" = "2" ] || [ "$nodetype" = "3" -a "$nodeplan" = "3" -a "$nodeno" = "2" ] || [ "$nodetype" = "3" -a "$nodeplan" = "4" -a "$nodeno" = "3" ]; then
-echo "start zuulmanager"	
-pIDzuulmanager=`lsof -i :$portzuulmanager|grep  "LISTEN" | awk '{print $2}'`
+virtual_server vip 20892 {
+    delay_loop 2
+    lb_algo wrr
+    lb_kind DR
+    persistence_timeout 50
+    protocol TCP
 
-
-if [ "$pIDzuulmanager" = "" ] ; then
-	keepalivedcheck=$(ps -C keepalived --no-header | wc -l)
-	if [ "${keepalivedcheck}" != "0" ]; then
-	  /etc/init.d/keepalived stop
-	else
-	  echo "keepalived is stoped"
-	fi
-fi
-
-fi
-
+    real_server rip 20892 {
+        weight 3
+        notify_down /usr/local/keepalived/checkZuul.sh
+      TCP_CHECK {
+      connect_timeout 10
+      nb_get_retry 3
+      delay_before_retry 3
+      connect_port 20892
+      } 
+        }
+    }
+}
