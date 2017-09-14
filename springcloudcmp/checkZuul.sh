@@ -21,7 +21,6 @@ echo "start zuulmanager"
 pIDzuulmanager=`lsof -i :$portzuulmanager|grep  "LISTEN" | awk '{print $2}'`
 
 
-# 如果上面无法启动成功，那么就停止keepalived
 if [ "$pIDzuulmanager" = "" ] ; then
 	keepalivedcheck=$(ps -C keepalived --no-header | wc -l)
 	if [ "${keepalivedcheck}" != "0" ]; then
