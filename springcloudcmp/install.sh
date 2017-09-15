@@ -684,10 +684,10 @@ uninstall_internode(){
 		echo "删除节点"$i
 		ssh $i <<EOF
 		rm -rf "$CURRENT_DIR"
-		rm -rf /home/cmpimuser/
+		rm -rf /home/$cmpuser/
 		rm -rf /usr/java/
 		rm -rf /tmp/*
-		userdel cmpimuser
+		userdel $cmpuser
 		iptables -P INPUT ACCEPT
 		iptables -D INPUT -j cmp
 		iptables -F cmp
