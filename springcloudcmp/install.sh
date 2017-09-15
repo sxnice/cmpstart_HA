@@ -388,9 +388,9 @@ copy-internode(){
 			su $cmpuser
 			umask 077
 	#		rm -rf "$CURRENT_DIR"/data
-			mkdir  "$CURRENT_DIR"/data
+			mkdir -p "$CURRENT_DIR"/data
 	#		rm -rf "$CURRENT_DIR"/activemq-data
-			mkdir  "$CURRENT_DIR"/activemq-data
+			mkdir -p "$CURRENT_DIR"/activemq-data
 			rm -rf "$CURRENT_DIR"/logs
 			mkdir  "$CURRENT_DIR"/logs
 			rm -rf "$CURRENT_DIR"/temp
@@ -656,7 +656,8 @@ stop_internode(){
 	for i in $(cat haiplist)
 	do
 		echo "关闭节点"$i
-		local user=`ssh -n $i cat /etc/passwd | sed -n /$cmpuser/p |wc -l`
+		#local user=`ssh -n $i cat /etc/passwd | sed -n /$cmpuser/p |wc -l`
+		local user=`ssh -n $i cat /etc/passwd | awk -F : '{print \$1}' | grep -w $cmpuser |wc -l`
 		if [ "$user" -eq 1 ]; then
 			local jars=`ssh -n $i ps -u $cmpuser | grep -v PID | wc -l`
 			if [ "$jars" -gt 0 ]; then

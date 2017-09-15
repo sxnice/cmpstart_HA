@@ -12,7 +12,7 @@ dcnamer="DC1"
 eurekaiprepr=localhost
 hanoder="main"
 JDK_DIR="/usr/java"
-
+KEEPALIVED_DIR="/usr/local/keepalived"
 #---------------可修改配置参数------------------
 #安装目录
 CURRENT_DIR="/springcloudcmp"
@@ -240,9 +240,9 @@ copy-internode(){
 			su $cmpuser
 			umask 077
 	#		rm -rf "$CURRENT_DIR"/data
-			mkdir  "$CURRENT_DIR"/data
+			mkdir -p "$CURRENT_DIR"/data
 	#		rm -rf "$CURRENT_DIR"/activemq-data
-			mkdir  "$CURRENT_DIR"/activemq-data
+			mkdir -p "$CURRENT_DIR"/activemq-data
 			rm -rf "$CURRENT_DIR"/logs
 			mkdir  "$CURRENT_DIR"/logs
 			rm -rf "$CURRENT_DIR"/temp
@@ -381,6 +381,32 @@ EOF
 	done
 	echo_green "启动IM完成..."
 }
+
+#start_keepalived
+start_keepalived(){
+echo_green "启动keepalived开始..."
+for i in $(cat haiplist)
+        do
+	echo "启动节点"$i
+	local nplan=`ssh -n $i echo \\$nodeplan`
+        local ntype=`ssh -n $i echo \\$nodetype`
+        local nno=`ssh -n $i echo \\$nodeno`
+	if [ "$nplan" = "1" ] || [ "$ntype" = "1" -a "$nplan" = "2" -a "$nno" = "2" ] || [ "$ntype" = "1" -a "$nplan" = "3" -a "$nno" = "2" ] || [ "$ntype" = "1" -a "$nplan" = "4" -a "$nno" = "3" ] || [ "$ntype" = "3" -a "$nplan" = "2" -a "$nno" = "2" ] || [ "$ntype" = "3" -a "$nplan" = "3" -a "$nno" = "2" ] || [ "$ntype" = "3" -a "$nplan" = "4" -a "$nno" = "3" ]; then
+	local keepalived=`ssh -n "$i" rpm -qa |grep keepalived |wc -l`
+	if [ "$keepalived" -gt 0 ]; then
+		scp ./checkZuul.sh "$i":"$KEEPALIVED_DIR"
+		ssh $i <<EOF
+                setenforce 0
+                sed -i '/enforcing/{s/enforcing/disabled/}' /etc/selinux/config
+		chmod 740 /usr/local/keepalived/checkZuul.sh
+		/etc/init.d/keepalived restart
+		exit
+EOF
+	fi
+	fi
+done
+echo_green "启动keepalived完成..."
+}
 echo_yellow "--------一键安装（HA增量）说明-------------"
 echo_yellow "1、仅支持从原HA版本升级！"
 echo_yellow "2、仅支持相同节点数的升级！"
@@ -407,6 +433,7 @@ do
 		env_internode
 		iptable_imnode
 		start_internode
+		start_keepalived
         break
         ;;
     [2])
@@ -418,6 +445,7 @@ do
 		env_internode
 		iptable_imnode
 		start_internode
+		start_keepalived
         break
         ;;
     [3])
@@ -429,6 +457,7 @@ do
 		env_internode
 		iptable_imnode
 		start_internode
+		start_keepalived
         break
         ;;
     [4])
@@ -440,6 +469,7 @@ do
 		env_internode
 		iptable_imnode
 		start_internode
+		start_keepalived
         break
         ;;
      0)
