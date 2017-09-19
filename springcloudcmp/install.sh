@@ -570,6 +570,7 @@ EOF
 		chmod 740 /etc/init.d/keepalived
 		sed -i '/prioweight/{s/prioweight/$k/}' /etc/keepalived/keepalived.conf
 		sed -i '/vip/{s/vip/$VIP/}' /etc/keepalived/keepalived.conf
+		sed -i '/rip/{s/rip/$i/}' /etc/keepalived/keepalived.conf
 		/etc/init.d/keepalived restart
 		exit
 EOF
