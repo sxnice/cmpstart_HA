@@ -754,7 +754,7 @@ EOF
 	ssh $i <<EOF
 		echo "配置开机启动"
 		sed -i /mongo/d /etc/rc.d/rc.local
-        	echo " $MONGDO_DIR/bin/mongod --config $MONGDO_DIR/mongodb.conf" >> /etc/rc.d/rc.local
+        	echo "su - mongo -c '$MONGDO_DIR/bin/mongod --config $MONGDO_DIR/mongodb.conf'" >> /etc/rc.d/rc.local
         	chmod u+x /etc/rc.d/rc.local
 		
 		pkill mongod
