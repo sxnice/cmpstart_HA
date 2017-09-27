@@ -166,7 +166,10 @@ EOF
 		else
 			ssh -n "$i" cp "$MYSQL_DIR"/support-files/my-slave.cnf /etc/my.cnf
 		fi
-			
+		#获取节点内存大小
+		local MEMTOTAL=$(ssh $i free -b | sed -n '2p' | awk '{print $2}')
+		#配置70%
+		local memgbyte=`expr $MEMTOTAL \* 70 / 100 / 1024 / 1024 / 1024`
 		ssh $i <<EOF
 			echo "创建mysql用户"
 			groupadd mysql
@@ -176,6 +179,7 @@ EOF
 			chmod 744 /usr/local/mysql/bin/*
 			cp /usr/local/mysql/support-files/mysql.server /etc/init.d/mysql
 			sed -i 's/server_id=1/server_id=$k/g' /etc/my.cnf
+			sed -i 's/innodb_buffer_pool_size=1G/innodb_buffer_pool_size=$memgbyte/g' /etc/my.cnf
 			chmod 744 /etc/init.d/mysql
 			echo "初始化MYSQL"
 			cd /usr/local/mysql/bin
