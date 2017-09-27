@@ -477,10 +477,10 @@ env_internode(){
 			sed -i /umask/d ~/.bashrc
 			sed -i /eurekaiprep/d ~/.bashrc
                         sed -i /hanode/d ~/.bashrc
-			sed -i /CURRENT_DIR/d ~/.bashrc
+			sed -i /CMP_DIR/d ~/.bashrc
 			echo "umask 077" >> ~/.bashrc
 
-			echo "CURRENT_DIR=$CURRENT_DIR export CURRENT_DIR" >> ~/.bashrc
+			echo "CMP_DIR=$CURRENT_DIR export CMP_DIR" >> ~/.bashrc
 			echo "nodeplan=$nodeplanr">>~/.bashrc
                         echo "nodetype=$nodetyper">>~/.bashrc
                         echo "nodeno=$nodenor">>~/.bashrc 
