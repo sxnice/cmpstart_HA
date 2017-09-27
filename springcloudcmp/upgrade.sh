@@ -278,6 +278,7 @@ env_internode(){
             		sed -i /dcname/d ~/.bashrc
 			sed -i /eurekaiprep/d ~/.bashrc
                         sed -i /hanode/d ~/.bashrc
+			sed -i /CMP_DIR/d ~/.bashrc
 			
 			echo "umask 077" >> ~/.bashrc
 			echo "CMP_DIR=$CURRENT_DIR" >> ~/.bashrc
