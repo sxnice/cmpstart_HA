@@ -457,6 +457,7 @@ env_internode(){
 			sed -i /dcname/d /etc/environment
 			sed -i /eurekaiprep/d /etc/environment
                         sed -i /hanode/d /etc/environment
+			sed -i /CMP_DIR/d /etc/environment
 			
 			echo "nodeplan=$nodeplanr">>/etc/environment
 			echo "nodetype=$nodetyper">>/etc/environment
@@ -465,6 +466,8 @@ env_internode(){
 			echo "dcname=$dcnamer">>/etc/environment
 			echo "eurekaiprep=$eurekaiprepr">>/etc/environment
                         echo "hanode=$hanoder">>/etc/environment
+			echo "CMP_DIR=$CURRENT_DIR">>/etc/environment
+			echo "export CMP_DIR" >> /etc/environment
                         echo "export nodeplan nodetype nodeno eurekaip dcname eurekaiprep hanode">>/etc/environment
 			source /etc/environment
 
@@ -480,7 +483,8 @@ env_internode(){
 			sed -i /CMP_DIR/d ~/.bashrc
 			echo "umask 077" >> ~/.bashrc
 
-			echo "CMP_DIR=$CURRENT_DIR export CMP_DIR" >> ~/.bashrc
+			echo "CMP_DIR=$CURRENT_DIR" >> ~/.bashrc
+			echo "export CMP_DIR" >> ~/.bashrc
 			echo "nodeplan=$nodeplanr">>~/.bashrc
                         echo "nodetype=$nodetyper">>~/.bashrc
                         echo "nodeno=$nodenor">>~/.bashrc 

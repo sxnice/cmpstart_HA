@@ -281,6 +281,7 @@ env_internode(){
 			
 			echo "umask 077" >> ~/.bashrc
 			echo "CMP_DIR=$CURRENT_DIR" >> ~/.bashrc
+			echo "export CMP_DIR">>~/.bashrc
 			sed -n /nodeplan/p /etc/environment>>~/.bashrc 
 			echo "export nodeplan">>~/.bashrc
 			sed -n /nodetype/p /etc/environment>>~/.bashrc
