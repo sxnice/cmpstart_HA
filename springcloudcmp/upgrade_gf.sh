@@ -351,6 +351,8 @@ env_gfnode(){
 			if [ $nodetyper -eq 2 ] || [ $nodetyper -eq 3 ]; then
 			echo "输入采集节点名称，如DC1: "
 			read dcnamer
+			echo "请输入HA的node名称（主为main,备为rep）："
+			read hanoder
 			fi
 			
 			echo "设置nodeplan="$nodeplanr
@@ -359,6 +361,7 @@ env_gfnode(){
 			echo "设置eurekaip="$eurekaipr
 			echo "设置eurekaiprep="$eurekaiprepr
 			echo "设置dcname="$dcnamer
+			echo "设置hanode="$hanoder
 
 			echo "节点："$j
 			
@@ -369,13 +372,16 @@ env_gfnode(){
 			sed -i /eurekaip/d /etc/environment
 			sed -i /eurekaiprep/d /etc/environment
 			sed -i /dcname/d /etc/environment
+			sed -i /hanode/d /etc/environment
 			
-			echo "nodeplan=$nodeplanr export nodeplan">>/etc/environment
-			echo "nodetype=$nodetyper export nodetype">>/etc/environment
-			echo "nodeno=$nodenor export nodeno">>/etc/environment 
-			echo "eurekaip=$eurekaipr export eurekaip">>/etc/environment
-			echo "eurekaiprep=$eurekaipr export eurekaiprep">>/etc/environment
-			echo "dcname=$dcnamer export dcname">>/etc/environment 			
+			echo "nodeplan=$nodeplanr">>/etc/environment
+			echo "nodetype=$nodetyper">>/etc/environment
+			echo "nodeno=$nodenor">>/etc/environment 
+			echo "eurekaip=$eurekaipr">>/etc/environment
+			echo "eurekaiprep=$eurekaipr">>/etc/environment
+			echo "dcname=$dcnamer">>/etc/environment
+			echo "hanode=$hanoder">>/etc/environment 			
+			echo "export nodeplan nodetype nodeno eurekaip dcname eurekaiprep hanode">>/etc/environment
 			source /etc/environment
 			su - $cmpuser
 			sed -i /nodeplan/d ~/.bashrc
@@ -384,15 +390,18 @@ env_gfnode(){
                         sed -i /eurekaip/d ~/.bashrc
 			sed -i /eurekaiprep/d ~/.bashrc
                         sed -i /dcname/d ~/.bashrc
+			sed -i /hanode/d ~/.bashrc
 			
 			echo "umask 077" >> ~/.bashrc
 			echo "CURRENT_DIR=$CURRENT_DIR export CURRENT_DIR" >> ~/.bashrc
-			echo "nodeplan=$nodeplanr export nodeplan">>~/.bashrc
-                        echo "nodetype=$nodetyper export nodetype">>~/.bashrc
-                        echo "nodeno=$nodenor export nodeno">>~/.bashrc 
-                        echo "eurekaip=$eurekaipr export eurekaip">>~/.bashrc
-			echo "eurekaiprep=$eurekaipr export eurekaiprep">>~/.bashrc
-                        echo "dcname=$dcnamer export dcname">>~/.bashrc 
+			echo "nodeplan=$nodeplanr">>~/.bashrc
+                        echo "nodetype=$nodetyper">>~/.bashrc
+                        echo "nodeno=$nodenor">>~/.bashrc 
+                        echo "eurekaip=$eurekaipr">>~/.bashrc
+			echo "eurekaiprep=$eurekaipr">>~/.bashrc
+                        echo "dcname=$dcnamer">>~/.bashrc 
+			echo "hanode=$hanoder">>~/.bashrc
+			echo "export nodeplan nodetype nodeno eurekaip dcname eurekaiprep hanode">>~/.bashrc
 			source ~/.bashrc
 			exit
 EOF
