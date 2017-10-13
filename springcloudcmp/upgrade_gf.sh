@@ -21,6 +21,10 @@ cmpuser="cmpimuser"
 cmppass="Pbu4@123"
 #扩容采集节点组，用空格格开
 GF_H="10.143.132.189 10.143.132.190"
+#主控制节点IP
+M_IP="10.143.132.193"
+#备控制节点Ip
+S_IP="10.143.132.194"
 #时间同步服务器IP
 NTPIP="10.143.132.188"
 #-----------------------------------------------
@@ -331,22 +335,12 @@ env_gfnode(){
 		do
 		echo "配置节点"$j
 			
-			if [ $nodeplanr -ne 1 ]; then
 			echo "节点类型，请输入编号："  
 			echo "2-----采集节点."    
 			echo "3-----控制以及采集节点."    
 			read nodetyper 
 			
-			if [ $nodetyper -eq 1 ]; then
-			echo "当前控制节点编号请按照1,2,3等顺序编写："  
-			read nodenor
-			fi
 
-			echo "请输入主控制节点IP："  
-			read eurekaipr 
-			echo "请输入备控制节点IP: "
-			read eurekaiprepr
-			fi
 
 			if [ $nodetyper -eq 2 ] || [ $nodetyper -eq 3 ]; then
 			echo "输入采集节点名称，如DC1: "
@@ -354,12 +348,13 @@ env_gfnode(){
 			echo "请输入HA的node名称（主为main,备为rep）："
 			read hanoder
 			fi
+			nodenor=0
 			
 			echo "设置nodeplan="$nodeplanr
 			echo "设置nodetype="$nodetyper
 			echo "设置nodeno="$nodenor	
-			echo "设置eurekaip="$eurekaipr
-			echo "设置eurekaiprep="$eurekaiprepr
+			echo "设置eurekaip="$M_IP
+			echo "设置eurekaiprep="$S_IP
 			echo "设置dcname="$dcnamer
 			echo "设置hanode="$hanoder
 
@@ -377,8 +372,8 @@ env_gfnode(){
 			echo "nodeplan=$nodeplanr">>/etc/environment
 			echo "nodetype=$nodetyper">>/etc/environment
 			echo "nodeno=$nodenor">>/etc/environment 
-			echo "eurekaip=$eurekaipr">>/etc/environment
-			echo "eurekaiprep=$eurekaipr">>/etc/environment
+			echo "eurekaip=$M_IP">>/etc/environment
+			echo "eurekaiprep=$S_IP">>/etc/environment
 			echo "dcname=$dcnamer">>/etc/environment
 			echo "hanode=$hanoder">>/etc/environment 			
 			echo "export nodeplan nodetype nodeno eurekaip dcname eurekaiprep hanode">>/etc/environment
@@ -397,8 +392,8 @@ env_gfnode(){
 			echo "nodeplan=$nodeplanr">>~/.bashrc
                         echo "nodetype=$nodetyper">>~/.bashrc
                         echo "nodeno=$nodenor">>~/.bashrc 
-                        echo "eurekaip=$eurekaipr">>~/.bashrc
-			echo "eurekaiprep=$eurekaipr">>~/.bashrc
+                        echo "eurekaip=$M_IP">>~/.bashrc
+			echo "eurekaiprep=$S_IP">>~/.bashrc
                         echo "dcname=$dcnamer">>~/.bashrc 
 			echo "hanode=$hanoder">>~/.bashrc
 			echo "export nodeplan nodetype nodeno eurekaip dcname eurekaiprep hanode">>~/.bashrc
