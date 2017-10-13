@@ -75,6 +75,8 @@ plugin-load = "rpl_semi_sync_master=semisync_master.so;rpl_semi_sync_slave=semis
 rpl-semi-sync-master-enabled = 1
 rpl-semi-sync-slave-enabled = 1
 
+#read-only=1
+
 [mysqldump]
 quick
 
