@@ -171,6 +171,9 @@ EOF
 		#配置70%
 		local memgbyte=`expr $MEMTOTAL \* 70 / 100 / 1024 / 1024 / 1024`
 		ssh $i <<EOF
+			echo "关闭selinux防火墙"
+			setenforce 0
+                	sed -i '/enforcing/{s/enforcing/disabled/}' /etc/selinux/config
 			echo "创建mysql用户"
 			groupadd mysql
 			useradd -r -g mysql -s /bin/false mysql
@@ -189,6 +192,9 @@ EOF
 			chmod 644 /usr/local/mysql/data/server-key.pem
 			echo "第一次启动MYSQL"
 			/etc/init.d/mysql restart
+			echo "配置开机启动"
+			chkconfig --add mysqld
+			chkconfig --level 2345 mysqld on
 			echo "配置环境变量"
 			sed -i /mysql/d ~/.bashrc
 			echo export PATH=/usr/local/mysql/bin:'\$PATH' >> ~/.bashrc
