@@ -69,6 +69,7 @@ relay_log_info_file	= relay-bin.info
 expire-logs-days         = 10
 enforce_gtid_consistency = ON
 gtid_mode = ON
+#做为其他的主节点，去更新从节点日志
 log_slave_updates = ON
 binlog_format = ROW
 skip-slave-start

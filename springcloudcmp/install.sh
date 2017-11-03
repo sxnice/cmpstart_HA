@@ -267,6 +267,7 @@ install_redis(){
                 do
                 echo "安装节点..."$i
 		ssh -n "$i" mkdir -p "$REDIS_DIR"
+		chmod -R 744 ../packages/redis/*
                 scp -r ../packages/redis/* "$i":"$REDIS_DIR"
                 #编译安装
 		ssh $i <<EOF
